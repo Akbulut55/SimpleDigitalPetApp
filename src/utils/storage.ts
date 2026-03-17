@@ -6,9 +6,7 @@ type SimpleStorage = {
   removeItem: (key: string) => Promise<void>;
 };
 
-const memoryStore = new Map<string, string>();
-
-const getWebStorage = (): SimpleStorage | null => {
+const webStorage: SimpleStorage | null = (() => {
   const maybeLocalStorage = (globalThis as any).localStorage;
   if (!maybeLocalStorage) {
     return null;
@@ -26,6 +24,18 @@ const getWebStorage = (): SimpleStorage | null => {
       maybeLocalStorage.removeItem(key);
     },
   };
+})();
+
+const memoryStore = new Map<string, string>();
+
+const memoryStorage: SimpleStorage = {
+  getItem: async (key: string) => (memoryStore.has(key) ? memoryStore.get(key) ?? null : null),
+  setItem: async (key: string, value: string) => {
+    memoryStore.set(key, value);
+  },
+  removeItem: async (key: string) => {
+    memoryStore.delete(key);
+  },
 };
 
 const nativeStorage: SimpleStorage = {
@@ -52,14 +62,4 @@ const nativeStorage: SimpleStorage = {
   },
 };
 
-const memoryStorage: SimpleStorage = {
-  getItem: async (key: string) => (memoryStore.has(key) ? memoryStore.get(key) ?? null : null),
-  setItem: async (key: string, value: string) => {
-    memoryStore.set(key, value);
-  },
-  removeItem: async (key: string) => {
-    memoryStore.delete(key);
-  },
-};
-
-export const petStorage: SimpleStorage = getWebStorage() ? getWebStorage() : nativeStorage;
+export const petStorage: SimpleStorage = webStorage ?? nativeStorage;
