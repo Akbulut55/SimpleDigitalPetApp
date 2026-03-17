@@ -28,6 +28,15 @@ export default function App() {
   const [hunger, setHunger] = useState(50);
   const [happiness, setHappiness] = useState(50);
 
+  const handleFeed = () => {
+    setHunger(prev => Math.max(0, prev - 10));
+  };
+
+  const handlePlay = () => {
+    setHappiness(prev => Math.min(prev + 10, 100));
+    setHunger(prev => Math.min(prev + 5, 100));
+  };
+
   return (
     <View style={styles.container}>
       <Pet
@@ -35,12 +44,13 @@ export default function App() {
         species="Cat"
         hunger={hunger}
         happiness={happiness}
-        onFeed={() => setHunger(hunger - 10)}
-        onPlay={() => setHappiness(happiness + 10)}
+        onFeed={handleFeed}
+        onPlay={handlePlay}
       />
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
