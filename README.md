@@ -1,97 +1,100 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Simple Digital Pet App
 
-# Getting Started
+Bu proje, sınıf içi bir mobil uygulama challenge görevi için geliştirilmiş basit bir **React Native dijital evcil hayvan uygulamasıdır**.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+Uygulamada bir evcil hayvanın **adı** ve **türü** gösterilir. Kullanıcı, **Besle** ve **Oyna** butonlarıyla evcil hayvanın **açlık** ve **mutluluk** değerlerini değiştirebilir.
 
-## Step 1: Start Metro
+## Özellikler
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- Evcil hayvanın adını ve türünü gösterir
+- Açlık ve mutluluk değerlerini gösterir
+- **Besle** butonu ile açlığı azaltır
+- **Oyna** butonu ile mutluluğu artırır
+- Değerler `0` ile `100` arasında sınırlandırılmıştır
+- Duruma göre değişen ruh hali metni bulunur
+- Duruma göre değişen emoji kullanılır
+- Duruma göre değişen kart rengi bulunur
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Kullanılan Teknolojiler
 
-```sh
-# Using npm
+- React Native
+- TypeScript
+- StyleSheet
+- Flexbox
+
+## Projenin Amacı
+
+Bu projenin amacı şunları pratik etmektir:
+
+- tekrar kullanılabilir component oluşturma
+- **props** ve **state** kullanımı
+- buton etkileşimleri ile veri güncelleme
+- state’e göre arayüzü dinamik olarak değiştirme
+- elle yazılmış ilk sürümü AI desteğiyle iyileştirme ve refactor etme
+
+## Bileşen Yapısı
+
+### `App`
+Uygulamanın ana ekranıdır.
+
+Sorumlulukları:
+- `hunger` state’ini tutmak
+- `happiness` state’ini tutmak
+- pet component’ine props göndermek
+- **Besle** ve **Oyna** işlemlerini yönetmek
+
+### `Pet`
+Tekrar kullanılabilir evcil hayvan component’idir.
+
+Gösterdiği bilgiler:
+- evcil hayvan adı
+- türü
+- açlık değeri
+- mutluluk değeri
+- ruh hali
+- emoji
+- aksiyon butonları
+
+## State Mantığı
+
+- **Besle** işlemi açlığı azaltır
+- **Oyna** işlemi mutluluğu artırır
+- **Oyna** işlemi açlığı bir miktar artırabilir
+- tüm değerler `0` ile `100` arasında tutulur
+
+## Ekran Görüntüleri
+
+<p align="center">
+  <img src="./screenshots/happy-state.png" width="30%" />
+  <img src="./screenshots/sad-state.png" width="30%" />
+  <img src="./screenshots/hungry-state.png" width="30%" />
+</p>
+
+## Nasıl Çalıştırılır
+
+```bash
+npm install
 npm start
-
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
+## Öğrenilenler
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+Bu projede şunları öğrendim:
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+- `useState` ile state yönetimi
+- props ile veri aktarma
+- basit ve etkileşimli bir component geliştirme
+- `Math.min` ve `Math.max` ile state değerlerini sınırlandırma
+- Flexbox ve StyleSheet ile daha düzenli bir arayüz oluşturma
+- ilk yazılan kaba kodu daha temiz bir yapıya dönüştürme
 
-```sh
-bundle install
-```
+## AI Prompt Özeti
 
-Then, and every time you update your native dependencies, run:
+**Kullanılan prompt:**
 
-```sh
-bundle exec pod install
-```
+> I wrote this React Native digital pet app myself as a rough skeleton. Please improve this code as a senior developer, but keep the same basic logic and structure. Center the layout using Flexbox, add a modern StyleSheet design, add dynamic emoji and dynamic mood text based on hunger and happiness, optionally change card/background color depending on the pet state, keep hunger and happiness between 0 and 100, refactor with clean code principles, and briefly explain what you improved and why.
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+**AI desteğinden öğrendiğim kısa not:**
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Açlık ve mutluluk gibi state değerlerinin `Math.max` ve `Math.min` ile sınırlandırılmasının, hatalı değer oluşmasını engellediğini öğrendim. Ayrıca emoji, ruh hali metni ve renk gibi arayüz detaylarının doğrudan state’e göre türetilebileceğini gördüm.
