@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppPalette } from '../types/pet';
+import { MiniGameQuestion } from '../types/miniGame';
 import { ActionButton } from './ActionButton';
 import { getMiniGameDeck } from '../utils/miniGame';
 
@@ -18,6 +19,17 @@ type MiniGameStatus = {
   reason: string;
 };
 
+type AnswerFeedback = {
+  selectedIndex: number;
+  isCorrect: boolean;
+  nextCorrectAnswers: number;
+  nextWrongAnswers: number;
+  shouldFinish: boolean;
+  finishLost: boolean;
+  finishReason: string;
+  explanation: string;
+};
+
 const TOTAL_SECONDS = 60;
 const MAX_WRONG_ANSWERS = 3;
 
@@ -32,9 +44,11 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [wrongAnswers, setWrongAnswers] = useState(0);
   const [status, setStatus] = useState<MiniGameStatus | null>(null);
+  const [feedback, setFeedback] = useState<AnswerFeedback | null>(null);
 
   const current = questions[index];
   const timeProgress = Math.max(0, (timeLeft / TOTAL_SECONDS) * 100);
+  const codeLines = current?.prompt.split('\n');
 
   const handleRestart = () => {
     setQuestions(createQuestionDeck());
@@ -43,10 +57,11 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
     setCorrectAnswers(0);
     setWrongAnswers(0);
     setStatus(null);
+    setFeedback(null);
   };
 
   useEffect(() => {
-    if (status) {
+    if (status || feedback) {
       return;
     }
 
@@ -61,7 +76,7 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [status]);
+  }, [feedback, status]);
 
   const finishGame = (nextCorrect: number, nextWrong: number, lost: boolean, reason: string) => {
     if (status) {
@@ -79,57 +94,110 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
   };
 
   useEffect(() => {
-    if (timeLeft === 0 && !status) {
+    if (timeLeft === 0 && !status && !feedback) {
       finishGame(correctAnswers, wrongAnswers, true, 'Time is up. Try faster next time!');
     }
-  }, [timeLeft, status, correctAnswers, wrongAnswers, usedQuestionIds, onComplete]);
+  }, [correctAnswers, feedback, onComplete, status, timeLeft, usedQuestionIds, wrongAnswers]);
+
+  const buildFeedback = (question: MiniGameQuestion, selectedIndex: number): AnswerFeedback => {
+    const isCorrect = selectedIndex === question.correctOptionIndex;
+    const nextCorrectAnswers = correctAnswers + (isCorrect ? 1 : 0);
+    const nextWrongAnswers = wrongAnswers + (isCorrect ? 0 : 1);
+    const isLastQuestion = index === questions.length - 1;
+
+    if (!isCorrect && nextWrongAnswers >= MAX_WRONG_ANSWERS) {
+      return {
+        selectedIndex,
+        isCorrect,
+        nextCorrectAnswers,
+        nextWrongAnswers,
+        shouldFinish: true,
+        finishLost: true,
+        finishReason: 'You made 3 incorrect answers.',
+        explanation: question.explanation,
+      };
+    }
+
+    if (isLastQuestion) {
+      return {
+        selectedIndex,
+        isCorrect,
+        nextCorrectAnswers,
+        nextWrongAnswers,
+        shouldFinish: true,
+        finishLost: false,
+        finishReason: isCorrect
+          ? 'You finished in time and avoided too many mistakes.'
+          : 'Quiz ended after all questions.',
+        explanation: question.explanation,
+      };
+    }
+
+    return {
+      selectedIndex,
+      isCorrect,
+      nextCorrectAnswers,
+      nextWrongAnswers,
+      shouldFinish: false,
+      finishLost: false,
+      finishReason: '',
+      explanation: question.explanation,
+    };
+  };
 
   const handleAnswer = (selectedIndex: number) => {
-    if (status || !current) {
+    if (status || feedback || !current) {
       return;
     }
 
-    const isCorrect = selectedIndex === current.correctOptionIndex;
+    const nextFeedback = buildFeedback(current, selectedIndex);
+    setCorrectAnswers(nextFeedback.nextCorrectAnswers);
+    setWrongAnswers(nextFeedback.nextWrongAnswers);
+    setFeedback(nextFeedback);
+  };
 
-    if (isCorrect) {
-      const nextCorrect = correctAnswers + 1;
-      const isLastQuestion = index === questions.length - 1;
-
-      setCorrectAnswers(nextCorrect);
-
-      if (isLastQuestion) {
-        finishGame(nextCorrect, wrongAnswers, false, 'You finished in time and avoided too many mistakes.');
-        return;
-      }
-
-      setIndex(previous => previous + 1);
+  const handleContinue = () => {
+    if (!feedback) {
       return;
     }
 
-    const nextWrong = wrongAnswers + 1;
+    const pendingFeedback = feedback;
+    setFeedback(null);
 
-    if (nextWrong >= MAX_WRONG_ANSWERS) {
-      finishGame(correctAnswers, nextWrong, true, 'You made 3 incorrect answers.');
-      return;
-    }
-
-    setWrongAnswers(nextWrong);
-
-    if (index === questions.length - 1) {
-      finishGame(correctAnswers, nextWrong, false, 'Quiz ended after all questions.');
+    if (pendingFeedback.shouldFinish) {
+      finishGame(
+        pendingFeedback.nextCorrectAnswers,
+        pendingFeedback.nextWrongAnswers,
+        pendingFeedback.finishLost,
+        pendingFeedback.finishReason,
+      );
       return;
     }
 
     setIndex(previous => previous + 1);
   };
 
-  const codeLines = current?.prompt.split('\n');
+  const getOptionStateStyle = (optionIndex: number) => {
+    if (!feedback || !current) {
+      return null;
+    }
+
+    if (optionIndex === current.correctOptionIndex) {
+      return styles.optionButtonCorrect;
+    }
+
+    if (!feedback.isCorrect && optionIndex === feedback.selectedIndex) {
+      return styles.optionButtonWrong;
+    }
+
+    return styles.optionButtonDim;
+  };
 
   return (
     <View style={styles.container}>
       <View style={[styles.headerWrap, { alignItems: 'center' }]}> 
         <Text style={[styles.title, { color: palette.text }]}>React Native Fast Quiz</Text>
-        <Text style={[styles.subtitle, { color: palette.textMuted }]}>Fill the blank in each snippet before the 60-second timer ends.</Text>
+        <Text style={[styles.subtitle, { color: palette.textMuted }]}>Answer quickly, then read the explanation before moving to the next question.</Text>
       </View>
 
       <View style={[styles.scoreSurface, { borderColor: palette.panelBorder, backgroundColor: palette.surface, shadowColor: palette.shadowColor }]}> 
@@ -153,16 +221,12 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
       </View>
 
       <View style={[styles.card, { borderColor: palette.panelBorder, backgroundColor: palette.surface, shadowColor: palette.shadowColor }]}> 
-        <Text style={[styles.cardHeader, { color: palette.text }]}> 
-          Question {Math.min(index + 1, questions.length)} / {questions.length}
-        </Text>
+        <Text style={[styles.cardHeader, { color: palette.text }]}>Question {Math.min(index + 1, questions.length)} / {questions.length}</Text>
 
         <ScrollView style={[styles.questionScroll, { borderColor: palette.panelBorder, backgroundColor: palette.surfaceAlt }]} nestedScrollEnabled>
           <Text style={[styles.questionText, { color: palette.textMuted }]}>Code prompt</Text>
           {codeLines?.map((line, lineIndex) => (
-            <Text key={lineIndex} style={[styles.codeLine, { color: palette.text }]}> 
-              {line.replace('___', '_____')}
-            </Text>
+            <Text key={lineIndex} style={[styles.codeLine, { color: palette.text }]}>{line.replace('___', '_____')}</Text>
           ))}
         </ScrollView>
 
@@ -170,9 +234,14 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
           {current?.options.map((option, optionIndex) => (
             <TouchableOpacity
               key={`${current.id}-${optionIndex}`}
-              style={[styles.optionButton, status ? styles.optionButtonDisabled : null, { borderColor: palette.panelBorder, backgroundColor: palette.optionBg }]}
+              style={[
+                styles.optionButton,
+                getOptionStateStyle(optionIndex),
+                status ? styles.optionButtonDisabled : null,
+                { borderColor: palette.panelBorder, backgroundColor: palette.optionBg },
+              ]}
               onPress={() => handleAnswer(optionIndex)}
-              disabled={!!status}
+              disabled={!!status || !!feedback}
             >
               <View style={[styles.optionIndex, { backgroundColor: palette.optionBgAlt }]}>
                 <Text style={[styles.optionIndexText, { color: palette.textMuted }]}>{optionIndex + 1}</Text>
@@ -181,6 +250,22 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
             </TouchableOpacity>
           ))}
         </View>
+
+        {feedback && current ? (
+          <View style={[styles.explanationWrap, { borderTopColor: palette.chipBorder, backgroundColor: palette.surfaceAlt }]}> 
+            <Text style={[styles.explanationTitle, { color: feedback.isCorrect ? '#15803d' : '#b91c1c' }]}>
+              {feedback.isCorrect ? 'Correct' : 'Not quite'}
+            </Text>
+            <Text style={[styles.explanationAnswer, { color: palette.text }]}>Correct answer: {current.options[current.correctOptionIndex]}</Text>
+            <Text style={[styles.explanationText, { color: palette.textMuted }]}>{feedback.explanation}</Text>
+            <ActionButton
+              title={feedback.shouldFinish ? 'See Results' : 'Next Question'}
+              color={feedback.shouldFinish ? '#f97316' : '#06b6d4'}
+              onPress={handleContinue}
+              isDarkMode={palette.text === '#f8fafc'}
+            />
+          </View>
+        ) : null}
 
         {!!status ? (
           <View style={[styles.resultWrap, { borderTopColor: palette.chipBorder }]}> 
@@ -306,6 +391,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  optionButtonCorrect: {
+    backgroundColor: '#dcfce7',
+    borderColor: '#86efac',
+  },
+  optionButtonWrong: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#fca5a5',
+  },
+  optionButtonDim: {
+    opacity: 0.72,
+  },
   optionButtonDisabled: {
     opacity: 0.5,
   },
@@ -325,6 +421,27 @@ const styles = StyleSheet.create({
     flex: 1,
     flexWrap: 'wrap',
   },
+  explanationWrap: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderRadius: 14,
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    gap: 8,
+  },
+  explanationTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  explanationAnswer: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  explanationText: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
   resultWrap: {
     marginTop: 12,
     borderTopWidth: 1,
@@ -343,5 +460,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-
-

@@ -3,6 +3,7 @@ export type MiniGameQuestion = {
   prompt: string;
   options: string[];
   correctOptionIndex: number;
+  explanation: string;
 };
 
 export type MiniGameResult = {
