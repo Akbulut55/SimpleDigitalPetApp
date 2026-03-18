@@ -1,10 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { PetCard } from './src/components/PetCard';
-import { SettingsScreen } from './src/components/SettingsScreen';
 import { AchievementsScreen } from './src/components/AchievementsScreen';
 import { MiniGameScreen } from './src/components/MiniGameScreen';
+import { PetCard } from './src/components/PetCard';
+import { SettingsScreen } from './src/components/SettingsScreen';
+import {
+  CAT_VARIANTS,
+  getCatVariantMeta,
+  normalizeCatSpriteId,
+} from './src/constants/petSprites';
+import { CatProfile, PetSpriteVariant, PetState } from './src/types/pet';
+import { getUnlockedAchievementIds, mapAchievements } from './src/utils/achievements';
 import {
   FEED_COIN_COST,
   FEED_HUNGER_DROP,
@@ -21,13 +28,10 @@ import {
   STORAGE_KEY,
 } from './src/utils/gameLogic';
 import { getMiniGameQuestionCount } from './src/utils/miniGame';
-import { PetSpriteVariant, PetState } from './src/types/pet';
-import { getUnlockedAchievementIds, mapAchievements } from './src/utils/achievements';
-import { CAT_VARIANTS, normalizeCatSpriteId } from './src/constants/petSprites';
 import { petStorage } from './src/utils/storage';
 
 type AppScreen = 'pet' | 'settings' | 'mini-game' | 'achievements';
-type RunningAction = 'feed' | null;
+type RunningAction = { type: 'feed'; catId: string } | null;
 type ActionSpriteConfig = {
   sprite: PetSpriteVariant;
   frameSequence?: number[];
@@ -69,46 +73,47 @@ const FEED_SLEEP_SEQUENCE = [
 
 const FEED_SLEEP_ACTION_FPS = 24;
 const FEED_EAT_ACTION_FPS = 8;
+
 const PALETTES = {
   light: {
-    background: '#e2e8f0',
+    background: '#edf4fb',
     surface: '#ffffff',
-    surfaceAlt: '#f8fafc',
-    panel: '#f1f5f9',
-    panelBorder: '#dbeafe',
-    text: '#0f172a',
-    textMuted: '#475569',
-    textSubtle: '#64748b',
-    chipBackground: '#f1f5f9',
-    chipBorder: '#dbeafe',
-    surfaceHighlight: '#f8fafc',
-    headerBand: '#dbeafe',
-    cardBg: '#eff6ff',
-    mutedTrack: '#e2e8f0',
+    surfaceAlt: '#f7fbff',
+    panel: '#edf5fb',
+    panelBorder: '#d7e4ef',
+    text: '#132238',
+    textMuted: '#5b6b80',
+    textSubtle: '#7b8aa0',
+    chipBackground: '#eef6ff',
+    chipBorder: '#d3e3f3',
+    surfaceHighlight: '#ffffff',
+    headerBand: '#e4f1ff',
+    cardBg: '#f4f9ff',
+    mutedTrack: '#dbe7f1',
     shadowColor: '#0f172a',
-    buttonDisabledBg: '#cbd5e1',
-    optionBg: '#f8fafc',
-    optionBgAlt: '#e2e8f0',
+    buttonDisabledBg: '#c8d5e1',
+    optionBg: '#f7fbff',
+    optionBgAlt: '#e8f1fa',
   },
   dark: {
-    background: '#020617',
-    surface: '#0f172a',
-    surfaceAlt: '#1e293b',
-    panel: '#1e293b',
-    panelBorder: '#334155',
-    text: '#f8fafc',
-    textMuted: '#94a3b8',
-    textSubtle: '#64748b',
-    chipBackground: '#1e293b',
-    chipBorder: '#334155',
-    surfaceHighlight: '#1f2937',
-    headerBand: '#0f172a',
-    cardBg: '#020617',
-    mutedTrack: '#1e293b',
+    background: '#07111f',
+    surface: '#101b2d',
+    surfaceAlt: '#162338',
+    panel: '#122033',
+    panelBorder: '#243247',
+    text: '#f5f7fb',
+    textMuted: '#a7b3c7',
+    textSubtle: '#7d8aa2',
+    chipBackground: '#18253a',
+    chipBorder: '#2c3b54',
+    surfaceHighlight: '#1b2a41',
+    headerBand: '#132033',
+    cardBg: '#0d1728',
+    mutedTrack: '#23324b',
     shadowColor: '#020617',
     buttonDisabledBg: '#334155',
-    optionBg: '#1e293b',
-    optionBgAlt: '#0f172a',
+    optionBg: '#18253a',
+    optionBgAlt: '#122033',
   },
 };
 
@@ -131,6 +136,26 @@ const getFeedActionForSprite = (baseSprite: PetSpriteVariant): ActionSpriteConfi
   };
 };
 
+const getCatById = (state: PetState, catId: string): CatProfile => {
+  return state.cats.find(cat => cat.id === catId) ?? state.cats[0];
+};
+
+const isCatUnlocked = (state: PetState, catId: string) => state.unlockedCatIds.includes(catId);
+
+const buildAchievementSnapshot = (state: PetState, catId: string) => {
+  const cat = getCatById(state, catId);
+
+  return {
+    hunger: cat.hunger,
+    happiness: cat.happiness,
+    xp: state.xp,
+    coins: state.coins,
+    feedCount: state.feedCount,
+    playCount: state.playCount,
+    miniGameCount: state.miniGameCount,
+  };
+};
+
 const App = () => {
   const [petState, setPetState] = useState<PetState>(INITIAL_STATE);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -138,25 +163,53 @@ const App = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-
   const [activeAction, setActiveAction] = useState<ActionSpriteConfig | null>(null);
   const [runningAction, setRunningAction] = useState<RunningAction>(null);
   const [isActionLocked, setIsActionLocked] = useState(false);
+
   const actionLockedRef = useRef(false);
   const activeActionRef = useRef<RunningAction>(null);
   const feedCompletionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const currentCat = useMemo(
+    () => getCatById(petState, petState.activeCatId),
+    [petState],
+  );
+  const currentVariant = useMemo(
+    () => getCatVariantMeta(currentCat.spriteId),
+    [currentCat.spriteId],
+  );
   const level = useMemo(() => getLevel(petState.xp), [petState.xp]);
   const moodTheme = useMemo(
-    () => getMoodFromState(petState.hunger, petState.happiness),
-    [petState.hunger, petState.happiness],
+    () => getMoodFromState(currentCat.hunger, currentCat.happiness),
+    [currentCat.happiness, currentCat.hunger],
   );
-
   const achievements = useMemo(
     () => mapAchievements(petState.unlockedAchievements),
     [petState.unlockedAchievements],
   );
   const activePalette = isDarkMode ? PALETTES.dark : PALETTES.light;
+  const settingsCats = useMemo(
+    () =>
+      CAT_VARIANTS.map(variant => {
+        const cat = petState.cats.find(item => item.id === variant.id) ?? currentCat;
+        const unlocked = isCatUnlocked(petState, cat.id);
+
+        return {
+          id: cat.id,
+          name: cat.name,
+          label: variant.label,
+          hunger: cat.hunger,
+          happiness: cat.happiness,
+          accent: variant.accent,
+          surface: variant.surface,
+          unlockCost: variant.unlockCost,
+          isActive: petState.activeCatId === cat.id,
+          isUnlocked: unlocked,
+        };
+      }),
+    [currentCat, petState],
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -169,7 +222,10 @@ const App = () => {
 
         const parsed = JSON.parse(raw) as Partial<PetState>;
         const loaded = normalizeState(parsed);
-        loaded.unlockedAchievements = getUnlockedAchievementIds(loaded, loaded.unlockedAchievements);
+        loaded.unlockedAchievements = getUnlockedAchievementIds(
+          buildAchievementSnapshot(loaded, loaded.activeCatId),
+          loaded.unlockedAchievements,
+        );
         setPetState(loaded);
       } catch (_error) {
         Alert.alert('Load error', 'Could not load progress, using defaults.');
@@ -193,7 +249,7 @@ const App = () => {
     if (isHydrated) {
       save();
     }
-  }, [petState, isHydrated]);
+  }, [isHydrated, petState]);
 
   useEffect(() => {
     return () => {
@@ -216,8 +272,11 @@ const App = () => {
     }
   }, [activeAction, isActionLocked, runningAction]);
 
-  const applyAchievements = (nextState: PetState, previous: PetState) => {
-    nextState.unlockedAchievements = getUnlockedAchievementIds(nextState, previous.unlockedAchievements);
+  const applyAchievements = (nextState: PetState, previous: PetState, catId: string) => {
+    nextState.unlockedAchievements = getUnlockedAchievementIds(
+      buildAchievementSnapshot(nextState, catId),
+      previous.unlockedAchievements,
+    );
   };
 
   const clearFeedCompletionTimeout = () => {
@@ -260,7 +319,7 @@ const App = () => {
     clearFeedCompletionTimeout();
     const actionToComplete = activeActionRef.current ?? runningAction;
 
-    if (!actionLockedRef.current && !actionToComplete) {
+    if (!actionLockedRef.current || !actionToComplete) {
       return;
     }
 
@@ -270,7 +329,7 @@ const App = () => {
     actionLockedRef.current = false;
     activeActionRef.current = null;
 
-    if (actionToComplete !== 'feed') {
+    if (actionToComplete.type !== 'feed') {
       return;
     }
 
@@ -281,19 +340,23 @@ const App = () => {
 
       const nextState = normalizeState({
         ...previous,
-        hunger: previous.hunger - FEED_HUNGER_DROP,
+        cats: previous.cats.map(cat =>
+          cat.id === actionToComplete.catId
+            ? { ...cat, hunger: cat.hunger - FEED_HUNGER_DROP }
+            : cat,
+        ),
         xp: previous.xp + FEED_XP,
         coins: previous.coins - FEED_COIN_COST,
         feedCount: previous.feedCount + 1,
       });
 
-      applyAchievements(nextState, previous);
+      applyAchievements(nextState, previous, actionToComplete.catId);
       return nextState;
     });
   };
 
   const handleFeed = () => {
-    if (isActionLocked || runningAction === 'feed') {
+    if (isActionLocked || runningAction?.type === 'feed') {
       Alert.alert('Busy', 'Cat is finishing the previous action. Please wait.');
       return;
     }
@@ -304,44 +367,63 @@ const App = () => {
     }
 
     const action = getFeedActionForSprite(isIdle ? 'sleep' : moodTheme.sprite);
+    const nextRunningAction = { type: 'feed', catId: currentCat.id } as const;
+
     setActiveAction(action);
-    setRunningAction('feed');
-    activeActionRef.current = 'feed';
+    setRunningAction(nextRunningAction);
+    activeActionRef.current = nextRunningAction;
     setIsActionLocked(true);
     actionLockedRef.current = true;
     scheduleFeedCompletionFallback(action);
   };
 
   const handlePlay = () => {
+    const targetCatId = currentCat.id;
+
     setPetState(previous => {
       const nextState = normalizeState({
         ...previous,
-        hunger: previous.hunger + PLAY_HUNGER_RISE,
-        happiness: previous.happiness + PLAY_HAPPINESS_GAIN,
+        cats: previous.cats.map(cat =>
+          cat.id === targetCatId
+            ? {
+                ...cat,
+                hunger: cat.hunger + PLAY_HUNGER_RISE,
+                happiness: cat.happiness + PLAY_HAPPINESS_GAIN,
+              }
+            : cat,
+        ),
         xp: previous.xp + PLAY_XP,
         playCount: previous.playCount + 1,
       });
 
-      applyAchievements(nextState, previous);
+      applyAchievements(nextState, previous, targetCatId);
       return nextState;
     });
   };
 
   const handleMiniGameComplete = (correctAnswers: number, lost: boolean, usedQuestionIds: string[]) => {
+    const targetCatId = currentCat.id;
+
     setPetState(previous => {
       const nextSeen = mergeSeenQuestionIds(previous.seenMiniGameQuestionIds, usedQuestionIds);
-
       const nextState = normalizeState({
         ...previous,
-        hunger: previous.hunger + MINIGAME_HUNGER_INCREASE,
-        happiness: previous.happiness - MINIGAME_HAPPINESS_DECREASE,
+        cats: previous.cats.map(cat =>
+          cat.id === targetCatId
+            ? {
+                ...cat,
+                hunger: cat.hunger + MINIGAME_HUNGER_INCREASE,
+                happiness: cat.happiness - MINIGAME_HAPPINESS_DECREASE,
+              }
+            : cat,
+        ),
         xp: previous.xp + (lost ? 0 : correctAnswers * 2),
         coins: previous.coins + (lost ? 0 : correctAnswers),
         miniGameCount: previous.miniGameCount + 1,
         seenMiniGameQuestionIds: nextSeen,
       });
 
-      applyAchievements(nextState, previous);
+      applyAchievements(nextState, previous, targetCatId);
       return nextState;
     });
 
@@ -357,16 +439,37 @@ const App = () => {
   };
 
   const handleSelectCatVariant = (spriteId: string) => {
-    setPetState(previous => {
-      return normalizeState({
+    if (isActionLocked) {
+      Alert.alert('Busy', 'Wait for the current cat action to finish before switching cats.');
+      return;
+    }
+
+    const nextCatId = normalizeCatSpriteId(spriteId);
+    const variant = getCatVariantMeta(nextCatId);
+
+    if (isCatUnlocked(petState, nextCatId)) {
+      setPetState(previous => normalizeState({ ...previous, activeCatId: nextCatId }));
+      return;
+    }
+
+    if (petState.coins < variant.unlockCost) {
+      Alert.alert('Cat locked', `${variant.label} costs ${variant.unlockCost} coins to unlock.`);
+      return;
+    }
+
+    setPetState(previous =>
+      normalizeState({
         ...previous,
-        spriteId: normalizeCatSpriteId(spriteId),
-      });
-    });
+        activeCatId: nextCatId,
+        coins: previous.coins - variant.unlockCost,
+        unlockedCatIds: [...previous.unlockedCatIds, nextCatId],
+      }),
+    );
+    Alert.alert('Cat unlocked', `${variant.label} is now available and has been set as your active cat.`);
   };
 
-  const handleRename = () =>{
-    setRenameValue(petState.name);
+  const handleRename = () => {
+    setRenameValue(currentCat.name);
     setIsRenameModalOpen(true);
   };
 
@@ -382,7 +485,14 @@ const App = () => {
       return;
     }
 
-    setPetState(previous => normalizeState({ ...previous, name: nextName }));
+    setPetState(previous =>
+      normalizeState({
+        ...previous,
+        cats: previous.cats.map(cat =>
+          cat.id === previous.activeCatId ? { ...cat, name: nextName } : cat,
+        ),
+      }),
+    );
     setIsRenameModalOpen(false);
   };
 
@@ -398,25 +508,34 @@ const App = () => {
       actionLockedRef.current = false;
       setPetState(INITIAL_STATE);
       setActiveScreen('pet');
-      Alert.alert('Progress reset', 'Your pet has been restored to defaults.');
+      Alert.alert('Progress reset', 'Gray cat is free again and the locked cats can be re-unlocked with coins.');
     }
   };
 
   const isIdle = activeScreen === 'pet' && !activeAction;
   const displaySprite = isIdle ? 'sleep' : activeAction ? activeAction.sprite : moodTheme.sprite;
   const isActionLooping = activeAction ? activeAction.loop : true;
-  const cardTheme = { ...moodTheme, sprite: displaySprite, spriteId: petState.spriteId };
-  const isFeedInProgress = isActionLocked || runningAction === 'feed';
+  const cardTheme = {
+    ...moodTheme,
+    sprite: displaySprite,
+    spriteId: currentCat.spriteId,
+    accent: currentVariant.accent,
+    accentSoft: currentVariant.surface,
+    variantLabel: currentVariant.label,
+  };
+  const isFeedInProgress = isActionLocked || runningAction?.type === 'feed';
+
   const renameDialog = (
     <Modal visible={isRenameModalOpen} transparent animationType="fade" onRequestClose={handleRenameCancel}>
       <View style={styles.modalBackdrop}>
         <View style={[styles.renameModal, { backgroundColor: activePalette.surface, borderColor: activePalette.panelBorder }]}> 
-          <Text style={[styles.renameTitle, { color: activePalette.text }]}>Rename pet</Text>
+          <Text style={[styles.renameTitle, { color: activePalette.text }]}>Rename current cat</Text>
+          <Text style={[styles.renameSubtitle, { color: activePalette.textMuted }]}>You're renaming {currentCat.name}.</Text>
           <TextInput
             style={[styles.renameInput, { borderColor: activePalette.panelBorder, color: activePalette.text, backgroundColor: activePalette.surfaceAlt }]}
             value={renameValue}
             onChangeText={setRenameValue}
-            placeholder="Pet name"
+            placeholder="Cat name"
             placeholderTextColor={activePalette.textSubtle}
             maxLength={18}
             autoCapitalize="words"
@@ -455,8 +574,7 @@ const App = () => {
             onResetProgress={handleReset}
             onAddTestCoins={handleAddTestCoins}
             onRename={handleRename}
-            catVariants={CAT_VARIANTS}
-            selectedCatVariant={petState.spriteId}
+            cats={settingsCats}
             onSelectCatVariant={handleSelectCatVariant}
           />
         </ScrollView>
@@ -496,20 +614,15 @@ const App = () => {
     <View style={[styles.container, { backgroundColor: activePalette.background }]}> 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.screenContent}>
         <PetCard
-          name={petState.name}
-          species="Cat"
-          hunger={petState.hunger}
-          happiness={petState.happiness}
+          name={currentCat.name}
+          species={currentVariant.label}
+          hunger={currentCat.hunger}
+          happiness={currentCat.happiness}
           coins={petState.coins}
           xp={petState.xp}
           level={level}
           feedCost={FEED_COIN_COST}
-          theme={
-            {
-              ...cardTheme,
-              sprite: displaySprite,
-            }
-          }
+          theme={cardTheme}
           frameSequence={activeAction?.frameSequence}
           sequenceFps={activeAction?.frameFps}
           sequenceSpeedMultiplier={activeAction?.frameSpeedMultiplier ?? 1}
@@ -525,9 +638,9 @@ const App = () => {
           palette={activePalette}
         />
       </ScrollView>
-        {renameDialog}
-      </View>
-    );
+      {renameDialog}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -537,14 +650,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 20,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#edf4fb',
   },
   scroll: {
     width: '100%',
   },
+  screenContent: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 12,
+    paddingBottom: 20,
+  },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.58)',
+    backgroundColor: 'rgba(2, 6, 23, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -553,7 +672,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     gap: 10,
     shadowColor: '#020617',
@@ -565,6 +684,10 @@ const styles = StyleSheet.create({
   renameTitle: {
     fontSize: 20,
     fontWeight: '700',
+    textAlign: 'center',
+  },
+  renameSubtitle: {
+    fontSize: 13,
     textAlign: 'center',
   },
   renameInput: {
@@ -595,30 +718,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
     color: '#ffffff',
-  },  screenContent: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 12,
-    paddingBottom: 12,
   },
 });
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

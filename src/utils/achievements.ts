@@ -1,4 +1,4 @@
-import { Achievement, BaseAchievement, PetState } from '../types/pet';
+import { Achievement, BaseAchievement } from '../types/pet';
 import { getLevel } from './gameLogic';
 
 const ACHIEVEMENT_CATALOG: ReadonlyArray<BaseAchievement> = [
@@ -84,8 +84,18 @@ const ACHIEVEMENT_CATALOG: ReadonlyArray<BaseAchievement> = [
   },
 ] as const;
 
+type AchievementSnapshot = {
+  hunger: number;
+  happiness: number;
+  xp: number;
+  coins: number;
+  feedCount: number;
+  playCount: number;
+  miniGameCount: number;
+};
+
 export const getUnlockedAchievementIds = (
-  state: Pick<PetState, 'hunger' | 'happiness' | 'xp' | 'coins' | 'feedCount' | 'playCount' | 'miniGameCount'>,
+  state: AchievementSnapshot,
   existing: string[],
 ): string[] => {
   const unlocked = new Set<string>(existing);

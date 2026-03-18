@@ -21,7 +21,6 @@ export const PetCard = ({
   onFeed,
   onPlay,
   onMiniGame,
-
   onOpenSettings,
   onOpenAchievements,
   isFeedInProgress = false,
@@ -34,39 +33,47 @@ export const PetCard = ({
   const xpProgress = xp % 100;
   const canFeed = coins >= feedCost && !isFeedInProgress;
   const spriteScale = 9;
-  const unlockedCount = achievements.filter(a => a.unlocked).length;
+  const unlockedCount = achievements.filter(item => item.unlocked).length;
   const showMoodChip = theme.mood.toLowerCase() !== 'normal';
 
   return (
     <View style={styles.page}>
-      <View style={[styles.hero, { backgroundColor: palette.surface, borderColor: palette.panelBorder }]}> 
-        <View style={[styles.heroBand, { backgroundColor: palette.headerBand }]}> 
-          <Text style={[styles.appPill, { color: palette.textMuted }]}>Digital Pet</Text>
+      <View style={[styles.hero, { backgroundColor: theme.cardBg, borderColor: theme.border, shadowColor: theme.accent ?? palette.shadowColor }]}> 
+        <View style={[styles.heroBand, { backgroundColor: theme.accentSoft ?? palette.headerBand, borderColor: `${theme.border}55` }]}> 
+          <Text style={[styles.appPill, { color: palette.text }]}>Current Cat</Text>
         </View>
+
         <View style={styles.heroTitleRow}>
-          <View>
+          <View style={styles.heroTextWrap}>
             <Text style={[styles.name, { color: palette.text }]}>{name}</Text>
-            <Text style={[styles.species, { color: palette.textMuted }]}>A curious {species}</Text>
+            <Text style={[styles.species, { color: palette.textMuted }]}>{species}</Text>
           </View>
-          {showMoodChip ? (
-            <View style={[styles.moodChip, { backgroundColor: palette.surfaceAlt }]}> 
-              <Text style={[styles.moodText, { color: palette.text }]}>{theme.mood}</Text>
+
+          <View style={styles.heroMetaStack}>
+            <View style={[styles.variantChip, { backgroundColor: palette.surface, borderColor: `${theme.border}66` }]}> 
+              <Text style={[styles.variantChipText, { color: palette.text }]}>{theme.variantLabel ?? 'Cat'}</Text>
             </View>
-          ) : null}
+            {showMoodChip ? (
+              <View style={[styles.moodChip, { backgroundColor: palette.surface, borderColor: `${theme.border}66` }]}> 
+                <Text style={[styles.moodText, { color: palette.text }]}>{theme.mood}</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       </View>
 
       <View style={[styles.showcaseCard, { borderColor: palette.panelBorder, backgroundColor: palette.surface }]}> 
         <View style={styles.showcaseHead}>
           <Text style={[styles.sectionTitle, { color: palette.text }]}>Pet Window</Text>
-          <Text style={[styles.sectionMeta, { color: palette.textMuted }]}>Level {level}</Text>
+          <Text style={[styles.sectionMeta, { color: palette.textMuted }]}>Shared Level {level}</Text>
         </View>
         <View
           style={[
             styles.stage,
             {
-              borderColor: `${palette.panelBorder}88`,
-              shadowColor: palette.shadowColor,
+              backgroundColor: theme.accentSoft ?? palette.surfaceAlt,
+              borderColor: theme.border,
+              shadowColor: theme.accent ?? palette.shadowColor,
             },
           ]}
         >
@@ -83,24 +90,24 @@ export const PetCard = ({
         </View>
       </View>
 
-      <View style={styles.statStack}>
+      <View style={[styles.statSurface, { borderColor: palette.panelBorder, backgroundColor: palette.surface }]}> 
         <StatBar label="Hunger" value={hunger} fillColor="#f97316" palette={palette} />
         <StatBar label="Happiness" value={happiness} fillColor="#22c55e" palette={palette} />
       </View>
 
       <View style={styles.keyGrid}>
-        <View style={[styles.keyItem, { backgroundColor: palette.surfaceAlt, borderColor: palette.panelBorder }]}> 
-          <Text style={[styles.keyIcon, { color: palette.text }]}>C</Text>
-          <Text style={[styles.keyLabel, { color: palette.textMuted }]}>Coins</Text>
+        <View style={[styles.keyItem, { backgroundColor: palette.surface, borderColor: palette.panelBorder }]}> 
+          <Text style={[styles.keyIcon, { color: '#2563eb' }]}>C</Text>
+          <Text style={[styles.keyLabel, { color: palette.textMuted }]}>Shared Coins</Text>
           <Text style={[styles.keyValue, { color: palette.text }]}>{coins}</Text>
         </View>
-        <View style={[styles.keyItem, { backgroundColor: palette.surfaceAlt, borderColor: palette.panelBorder }]}>
-          <Text style={[styles.keyIcon, { color: palette.text }]}>XP</Text>
-          <Text style={[styles.keyLabel, { color: palette.textMuted }]}>XP</Text>
+        <View style={[styles.keyItem, { backgroundColor: palette.surface, borderColor: palette.panelBorder }]}> 
+          <Text style={[styles.keyIcon, { color: '#0f766e' }]}>XP</Text>
+          <Text style={[styles.keyLabel, { color: palette.textMuted }]}>Player XP</Text>
           <Text style={[styles.keyValue, { color: palette.text }]}>{xp}</Text>
         </View>
-        <View style={[styles.keyItem, { backgroundColor: palette.surfaceAlt, borderColor: palette.panelBorder }]}> 
-          <Text style={[styles.keyIcon, { color: palette.text }]}>A</Text>
+        <View style={[styles.keyItem, { backgroundColor: palette.surface, borderColor: palette.panelBorder }]}> 
+          <Text style={[styles.keyIcon, { color: '#d97706' }]}>A</Text>
           <Text style={[styles.keyLabel, { color: palette.textMuted }]}>Achievements</Text>
           <Text style={[styles.keyValue, { color: palette.text }]}>{unlockedCount}</Text>
         </View>
@@ -108,11 +115,9 @@ export const PetCard = ({
 
       <View style={[styles.progressWrap, { borderColor: palette.panelBorder, backgroundColor: palette.surface }]}> 
         <Text style={[styles.progressTitle, { color: palette.text }]}>XP to next level</Text>
-        <Text style={[styles.progressMeta, { color: palette.textMuted }]}>Level {level} progress</Text>
+        <Text style={[styles.progressMeta, { color: palette.textMuted }]}>Player progression is shared between all cats.</Text>
         <View style={[styles.progressTrack, { backgroundColor: palette.mutedTrack }]}> 
-          <View
-            style={[styles.progressFill, { width: `${xpProgress}%`, backgroundColor: theme.buttonBg }]}
-          />
+          <View style={[styles.progressFill, { width: `${xpProgress}%`, backgroundColor: theme.buttonBg }]} />
         </View>
       </View>
 
@@ -120,24 +125,16 @@ export const PetCard = ({
         <Text style={[styles.sectionTitle, { color: palette.text }]}>Actions</Text>
         <View style={styles.actions}>
           <ActionButton title={`Feed (${feedCost} coins)`} color={theme.buttonBg} onPress={onFeed} disabled={!canFeed} isDarkMode={palette.text === '#f8fafc'} />
-          <ActionButton title="Play" color="#0f766e" onPress={onPlay} disabled={false} isDarkMode={palette.text === '#f8fafc'} />
-          <ActionButton title="Mini-Game" color="#4338ca" onPress={onMiniGame} disabled={false} isDarkMode={palette.text === '#f8fafc'} />
-
-          <ActionButton title="Achievements" color="#2563eb" onPress={onOpenAchievements} isDarkMode={palette.text === '#f8fafc'} />
-          <ActionButton title="Settings" color="#334155" onPress={onOpenSettings} isDarkMode={palette.text === '#f8fafc'} />
+          <ActionButton title="Play" color="#14b8a6" onPress={onPlay} disabled={false} isDarkMode={palette.text === '#f8fafc'} />
+          <ActionButton title="Mini-Game" color="#8b5cf6" onPress={onMiniGame} disabled={false} isDarkMode={palette.text === '#f8fafc'} />
+          <ActionButton title="Achievements" color="#f59e0b" onPress={onOpenAchievements} isDarkMode={palette.text === '#f8fafc'} />
+          <ActionButton title="Settings" color="#ec4899" onPress={onOpenSettings} isDarkMode={palette.text === '#f8fafc'} />
         </View>
       </View>
 
-      <View
-        style={[
-          styles.achievementSummary,
-          { borderColor: palette.panelBorder, backgroundColor: palette.surface },
-        ]}
-      >
+      <View style={[styles.achievementSummary, { borderColor: palette.panelBorder, backgroundColor: palette.surface }]}> 
         <Text style={[styles.achievementSummaryTitle, { color: palette.text }]}>Achievement Progress</Text>
-        <Text style={[styles.achievementSummaryValue, { color: palette.textMuted }]}> 
-          {unlockedCount}/{achievements.length}
-        </Text>
+        <Text style={[styles.achievementSummaryValue, { color: palette.textMuted }]}>{unlockedCount}/{achievements.length}</Text>
       </View>
     </View>
   );
@@ -150,36 +147,44 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   hero: {
-    borderRadius: 24,
+    borderRadius: 26,
     borderWidth: 1,
     paddingTop: 16,
-    paddingBottom: 14,
+    paddingBottom: 16,
     paddingHorizontal: 16,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.14,
     shadowRadius: 18,
-    elevation: 4,
-    position: 'relative',
+    elevation: 5,
     overflow: 'hidden',
+    gap: 14,
   },
   heroBand: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 7,
+    borderWidth: 1,
   },
   appPill: {
     fontSize: 11,
     letterSpacing: 1,
-    fontWeight: '700',
+    fontWeight: '800',
     textTransform: 'uppercase',
   },
   heroTitleRow: {
-    marginTop: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    gap: 12,
+  },
+  heroTextWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  heroMetaStack: {
+    alignItems: 'flex-end',
+    gap: 8,
   },
   name: {
     fontSize: 34,
@@ -188,14 +193,24 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   species: {
-    marginTop: 1,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  variantChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  variantChipText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   moodChip: {
     borderRadius: 999,
+    borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 7,
   },
   moodText: {
     fontWeight: '700',
@@ -223,17 +238,21 @@ const styles = StyleSheet.create({
   stage: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 24,
-    borderRadius: 18,
+    paddingVertical: 28,
+    borderRadius: 20,
     borderWidth: 1,
-
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.16,
     shadowRadius: 16,
     elevation: 6,
   },
-  statStack: {
+  statSurface: {
     width: '100%',
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 2,
   },
   keyGrid: {
     width: '100%',
@@ -243,35 +262,39 @@ const styles = StyleSheet.create({
   },
   keyItem: {
     flex: 1,
-    borderRadius: 16,
-    paddingVertical: 12,
+    borderRadius: 18,
+    paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
+    gap: 1,
   },
   keyIcon: {
-    fontSize: 14,
+    fontSize: 15,
     marginBottom: 2,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   keyLabel: {
     fontSize: 11,
     marginBottom: 2,
+    textAlign: 'center',
   },
   keyValue: {
     fontWeight: '800',
     fontSize: 18,
   },
   progressWrap: {
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    padding: 12,
+    padding: 14,
     gap: 8,
   },
   progressTitle: {
     fontWeight: '700',
+    fontSize: 15,
   },
   progressMeta: {
     fontSize: 12,
+    lineHeight: 17,
   },
   progressTrack: {
     height: 10,
@@ -293,9 +316,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   achievementSummary: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 11,
+    padding: 12,
   },
   achievementSummaryTitle: {
     fontWeight: '700',
@@ -306,13 +329,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 });
-
-
-
-
-
-
-
-
-
 

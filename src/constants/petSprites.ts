@@ -16,18 +16,48 @@ type CatSpriteConfig = {
   animations: Record<PetSpriteVariant, CatAnimation>;
 };
 
+export type CatSpriteId = 'default' | 'accent' | 'alt';
+
+export type CatVariantMeta = {
+  id: CatSpriteId;
+  label: string;
+  defaultName: string;
+  accent: string;
+  surface: string;
+  unlockCost: number;
+};
+
 export const CAT_FRAME_SIZE = 32;
 
 const catDefaultSheet = require('../assets/cat-sprites/cat-white.png');
 const catAccentSheet = require('../assets/cat-sprites/cat-brown.png');
 const catAltSheet = require('../assets/cat-sprites/cat-gray.png');
 
-export type CatSpriteId = 'default' | 'accent' | 'alt';
-
-export const CAT_VARIANTS: ReadonlyArray<{ id: CatSpriteId; name: string }> = [
-  { id: 'default', name: 'White Cat' },
-  { id: 'accent', name: 'Brown Cat' },
-  { id: 'alt', name: 'Gray Cat' },
+export const CAT_VARIANTS: ReadonlyArray<CatVariantMeta> = [
+  {
+    id: 'alt',
+    label: 'Gray Cat',
+    defaultName: 'Pebble',
+    accent: '#0f766e',
+    surface: '#ccfbf1',
+    unlockCost: 0,
+  },
+  {
+    id: 'default',
+    label: 'White Cat',
+    defaultName: 'Snow',
+    accent: '#0ea5e9',
+    surface: '#e0f2fe',
+    unlockCost: 30,
+  },
+  {
+    id: 'accent',
+    label: 'Brown Cat',
+    defaultName: 'Maple',
+    accent: '#d97706',
+    surface: '#fef3c7',
+    unlockCost: 45,
+  },
 ];
 
 const range = (from: number, to: number): FrameRange => ({
@@ -133,6 +163,7 @@ const createAnimations = (): Record<PetSpriteVariant, CatAnimation> => ({
   'walk-right-up': walkRightUp,
   'walk-left-up': walkLeftUp,
   sleep,
+  eat: eatDown,
   'eat-down': eatDown,
   'eat-up': eatUp,
   'eat-left': eatLeft,
@@ -176,7 +207,7 @@ export const CAT_SPRITES: Record<CatSpriteId, CatSpriteConfig> = {
   },
 };
 
-export const FALLBACK_SPRITE_ID: CatSpriteId = 'default';
+export const FALLBACK_SPRITE_ID: CatSpriteId = 'alt';
 
 export const normalizeCatSpriteId = (spriteId?: string): CatSpriteId => {
   if (spriteId === 'default' || spriteId === 'accent' || spriteId === 'alt') {
@@ -184,6 +215,11 @@ export const normalizeCatSpriteId = (spriteId?: string): CatSpriteId => {
   }
 
   return FALLBACK_SPRITE_ID;
+};
+
+export const getCatVariantMeta = (spriteId?: string): CatVariantMeta => {
+  const normalizedId = normalizeCatSpriteId(spriteId);
+  return CAT_VARIANTS.find(variant => variant.id === normalizedId) ?? CAT_VARIANTS[0];
 };
 
 export const getCatSpriteConfig = (spriteId: string = FALLBACK_SPRITE_ID): CatSpriteConfig => {
@@ -194,7 +230,3 @@ export const getAnimationForSprite = (
   sprite: PetSpriteVariant,
   config: CatSpriteConfig,
 ): CatAnimation => config.animations[sprite] ?? config.animations.normal;
-
-
-
-

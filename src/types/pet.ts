@@ -30,11 +30,18 @@ export type PetSpriteVariant =
   | `paw-attack-${CatDirection}`
   | 'paw-attack-hind-legs';
 
-export type PetState = {
+export type CatProfile = {
+  id: string;
+  spriteId: string;
   name: string;
   hunger: number;
   happiness: number;
-  spriteId: string;
+};
+
+export type PetState = {
+  activeCatId: string;
+  unlockedCatIds: string[];
+  cats: CatProfile[];
   xp: number;
   coins: number;
   feedCount: number;
@@ -73,6 +80,9 @@ export type PetTheme = {
   cardBg: string;
   buttonBg: string;
   border: string;
+  accent?: string;
+  accentSoft?: string;
+  variantLabel?: string;
 };
 
 export type BaseAchievement = {
@@ -110,7 +120,3 @@ export type PetCardProps = {
   sequenceFps?: number;
   onActionSequenceComplete?: () => void;
 };
-
-
-
-

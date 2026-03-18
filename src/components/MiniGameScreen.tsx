@@ -189,12 +189,12 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
             <Text style={[styles.resultText, { color: palette.textMuted }]}>Wrong: {status.wrongAnswers}</Text>
             <Text style={[styles.resultText, { color: palette.textMuted }]}>Status: {status.reason}</Text>
             <Text style={[styles.resultCoins, { color: '#16a34a' }]}>Coins earned: {status.lost ? 0 : status.correctAnswers}</Text>
-            <ActionButton title="Try Again" color="#2563eb" onPress={handleRestart} isDarkMode={palette.text === '#f8fafc'} />
+            <ActionButton title="Try Again" color="#06b6d4" onPress={handleRestart} isDarkMode={palette.text === '#f8fafc'} />
           </View>
         ) : null}
       </View>
 
-      <ActionButton title="Exit Quiz" color="#334155" onPress={onBack} isDarkMode={palette.text === '#f8fafc'} />
+      <ActionButton title="Exit Quiz" color="#f97316" onPress={onBack} isDarkMode={palette.text === '#f8fafc'} />
     </View>
   );
 };
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   timerFill: {
     height: '100%',
-    backgroundColor: '#2563eb',
+    backgroundColor: '#8b5cf6',
   },
   card: {
     width: '100%',
@@ -343,4 +343,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
 

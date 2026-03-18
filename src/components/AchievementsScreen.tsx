@@ -58,9 +58,9 @@ export const AchievementsScreen = ({ achievements, onBack, palette, onResetAchie
       </ScrollView>
 
       <View style={styles.footer}>
-        <ActionButton title="Back to Pet" color="#334155" onPress={onBack} isDarkMode={palette.text === '#f8fafc'} />
+        <ActionButton title="Back to Pet" color="#8b5cf6" onPress={onBack} isDarkMode={palette.text === '#f8fafc'} />
         {onResetAchievements ? (
-          <ActionButton title="Reset Achievements" color="#dc2626" onPress={onResetAchievements} isDarkMode={palette.text === '#f8fafc'} />
+          <ActionButton title="Reset Achievements" color="#ef4444" onPress={onResetAchievements} isDarkMode={palette.text === '#f8fafc'} />
         ) : null}
       </View>
     </View>
@@ -138,3 +138,4 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 });
+

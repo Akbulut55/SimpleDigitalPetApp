@@ -21,7 +21,7 @@ export const StatBar = ({ label, value, fillColor = '#0ea5e9', palette }: StatBa
         <Text style={[styles.statValue, { color: palette.text }]}>{safeValue}</Text>
       </View>
       <View style={[styles.statTrack, { backgroundColor: palette.mutedTrack }]}> 
-        <View style={styles.statGlow}>
+        <View style={[styles.statGlow, { backgroundColor: palette.surfaceHighlight }]}> 
           <View style={[styles.statFill, { width: `${safeValue}%`, backgroundColor: fillColor }]} />
         </View>
       </View>
@@ -58,7 +58,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     height: '100%',
     overflow: 'hidden',
-    backgroundColor: '#ffffff',
   },
   statFill: {
     height: '100%',
