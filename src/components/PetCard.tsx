@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { PetCardProps } from '../types/pet';
@@ -95,6 +95,14 @@ export const PetCard = ({
         <StatBar label="Happiness" value={happiness} fillColor="#22c55e" palette={palette} />
       </View>
 
+      <View style={[styles.careSurface, { borderColor: palette.panelBorder, backgroundColor: palette.surface }]}> 
+        <Text style={[styles.sectionTitle, { color: palette.text }]}>Care Actions</Text>
+        <View style={styles.actions}>
+          <ActionButton title={`Feed (${feedCost} coins)`} color={theme.buttonBg} onPress={onFeed} disabled={!canFeed} isDarkMode={palette.text === '#f8fafc'} />
+          <ActionButton title="Play" color="#14b8a6" onPress={onPlay} disabled={false} isDarkMode={palette.text === '#f8fafc'} />
+        </View>
+      </View>
+
       <View style={styles.keyGrid}>
         <View style={[styles.keyItem, { backgroundColor: palette.surface, borderColor: palette.panelBorder }]}> 
           <Text style={[styles.keyIcon, { color: '#2563eb' }]}>C</Text>
@@ -124,8 +132,6 @@ export const PetCard = ({
       <View style={[styles.actionSurface, { borderColor: palette.panelBorder, backgroundColor: palette.surface }]}> 
         <Text style={[styles.sectionTitle, { color: palette.text }]}>Actions</Text>
         <View style={styles.actions}>
-          <ActionButton title={`Feed (${feedCost} coins)`} color={theme.buttonBg} onPress={onFeed} disabled={!canFeed} isDarkMode={palette.text === '#f8fafc'} />
-          <ActionButton title="Play" color="#14b8a6" onPress={onPlay} disabled={false} isDarkMode={palette.text === '#f8fafc'} />
           <ActionButton title="Mini-Game" color="#8b5cf6" onPress={onMiniGame} disabled={false} isDarkMode={palette.text === '#f8fafc'} />
           <ActionButton title="Achievements" color="#f59e0b" onPress={onOpenAchievements} isDarkMode={palette.text === '#f8fafc'} />
           <ActionButton title="Settings" color="#ec4899" onPress={onOpenSettings} isDarkMode={palette.text === '#f8fafc'} />
@@ -329,4 +335,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 });
+
 
