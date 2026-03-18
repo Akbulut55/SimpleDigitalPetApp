@@ -1,4 +1,4 @@
-﻿import { MiniGameQuestion } from '../types/miniGame';
+﻿import { MiniGameQuestion, MiniGameTrack, MiniGameTrackId } from '../types/miniGame';
 
 const question = (
   id: string,
@@ -6,14 +6,36 @@ const question = (
   options: string[],
   correctOptionIndex: number,
   explanation: string,
+  trackId: MiniGameTrackId = 'react-native',
 ): MiniGameQuestion => ({
   id,
   prompt,
   options,
   correctOptionIndex,
   explanation,
+  trackId,
 });
 
+export const MINIGAME_TRACKS: ReadonlyArray<MiniGameTrack> = [
+  {
+    id: 'react-native',
+    title: 'React Native',
+    description: 'Components, hooks, styling, APIs, lists, accessibility, and mobile UI patterns.',
+    accentColor: '#06b6d4',
+  },
+  {
+    id: 'javascript',
+    title: 'JavaScript',
+    description: 'Core language skills you need before building strong mobile app logic.',
+    accentColor: '#f59e0b',
+  },
+  {
+    id: 'typescript',
+    title: 'TypeScript',
+    description: 'Safer props, state, utility types, unions, and typed functions for React Native apps.',
+    accentColor: '#8b5cf6',
+  },
+];
 export const MINIGAME_QUESTION_BANK: ReadonlyArray<MiniGameQuestion> = [
   question('rn-import-react', 'import React, { useState } from "___";', ['react', 'react-native', 'react-dom', 'expo'], 0, 'Hooks like useState come from the React package, not from react-native.'),
   question('rn-import-components', 'import { ___ } from "react-native";', ['Text, View', 'Button, Browser', 'StyleSheet, Navigator', 'ImagePicker, KeyboardAvoidingView'], 0, 'Core UI building blocks such as Text and View are exported from react-native.'),
@@ -108,6 +130,89 @@ export const MINIGAME_QUESTION_BANK: ReadonlyArray<MiniGameQuestion> = [
   question('rn-state-object', 'setForm(previous => ({ ...previous, email: text }));\nThe ...previous syntax is the ___ operator.', ['spread', 'rest', 'merge', 'append'], 0, 'The spread operator copies existing object fields into a new object.'),
   question('rn-list-empty', '<FlatList ListEmptyComponent={<Text>No items</Text>} />\nThis prop renders when the list is ___', ['loading', 'selected', 'empty', 'refreshing'], 2, 'ListEmptyComponent is shown when FlatList has no items to display.'),
   question('rn-screen-flex', '<SafeAreaView style={{ flex: 1 }}>\nWhy use flex: 1 here?\nIt makes the screen ___', ['fill available space', 'scroll automatically', 'become clickable', 'hide the status bar'], 0, 'Top-level screens often use flex: 1 so they fill the whole available screen area.'),
+  question('js-map-transform', 'const doubled = numbers.___(value => value * 2);', ['map', 'filter', 'find', 'reduce'], 0, 'map creates a new array by transforming each item from the original array.', 'javascript'),
+  question('js-filter-keep', 'const activeUsers = users.___(user => user.isActive);', ['find', 'filter', 'some', 'map'], 1, 'filter keeps every item whose callback returns true.', 'javascript'),
+  question('js-find-first', 'const pet = pets.___(item => item.id === 2);', ['filter', 'map', 'find', 'every'], 2, 'find returns the first matching item instead of a full array.', 'javascript'),
+  question('js-const', 'Use ___ when the variable reference should not be reassigned.', ['let', 'const', 'var', 'static'], 1, 'const prevents reassignment of the variable binding and is the common default choice.', 'javascript'),
+  question('js-let', 'Use ___ when a variable will change later.', ['const', 'readonly', 'let', 'fixed'], 2, 'let is used for variables that need reassignment.', 'javascript'),
+  question('js-template-literal', 'const label = ${name} is hungry};\nThis string uses a ___ literal.', ['quoted', 'template', 'typed', 'strict'], 1, 'Backticks create template literals so expressions can be inserted with .', 'javascript'),
+  question('js-object-destructure', 'const { hunger, happiness } = pet;\nThis syntax is called ___', ['spreading', 'destructuring', 'mapping', 'aliasing'], 1, 'Destructuring pulls properties out of an object into local variables.', 'javascript'),
+  question('js-array-spread', 'const next = [...items, newItem];\nThe ...items part is the ___ operator.', ['rest', 'spread', 'clone', 'array'], 1, 'Spread copies existing array items into a new array.', 'javascript'),
+  question('js-object-update', 'const nextPet = { ...pet, hunger: 40 };\nThis pattern helps keep updates ___', ['mutable', 'global', 'immutable', 'async'], 2, 'Creating a new object instead of mutating the old one is an immutable update.', 'javascript'),
+  question('js-optional-chaining', 'pet.owner?.name uses ___ chaining.', ['optional', 'strict', 'nullish', 'array'], 0, 'Optional chaining safely stops if the value before ?. is null or undefined.', 'javascript'),
+  question('js-nullish', 'const title = customTitle ?? "Untitled";\n?? uses the value on the right when the left is ___', ['false', 'empty string', 'null or undefined', '0'], 2, 'Nullish coalescing only falls back for null or undefined.', 'javascript'),
+  question('js-async-keyword', 'A function must be marked ___ before using await inside it.', ['promise', 'async', 'yield', 'defer'], 1, 'await only works inside async functions.', 'javascript'),
+  question('ts-string-type', 'const petName: ___ = "Milo";', ['StringType', 'string', 'text', 'char'], 1, 'string is the TypeScript primitive type for text values.', 'typescript'),
+  question('ts-number-array', 'const scores: ___ = [1, 2, 3];', ['number[]', 'numbers', '[number]', 'ArrayOnly<number>'], 0, 'number[] is a common shorthand for an array of numbers.', 'typescript'),
+  question('ts-boolean', 'const isHungry: ___ = true;', ['bool', 'boolean', 'truthy', 'flag'], 1, 'boolean is the TypeScript type for true/false values.', 'typescript'),
+  question('ts-prop-optional', 'type Props = { title?: string };\nThe ? means the prop is ___', ['required', 'optional', 'readonly', 'async'], 1, 'A property marked with ? can be omitted.', 'typescript'),
+  question('ts-union', 'type Status = "idle" | "loading" | "error";\nThis is a ___ type.', ['mapped', 'union', 'generic', 'tuple'], 1, 'Union types allow a value to be one of several specific types or literals.', 'typescript'),
+  question('ts-function-return', 'const handleFeed = (): ___ => { ... };\nUse this return type when the function returns nothing useful.', ['never', 'null', 'void', 'empty'], 2, 'void is the usual return type for functions that do not return a meaningful value.', 'typescript'),
+  question('ts-interface-shape', 'Use an ___ to describe the shape of an object like PetState.', ['interface', 'effect', 'screen', 'module'], 0, 'Interfaces are commonly used to describe object shapes in TypeScript.', 'typescript'),
+  question('ts-type-alias', 'type Coins = number;\nThis is called a type ___', ['merge', 'alias', 'guard', 'cast'], 1, 'A type alias gives a new reusable name to an existing type.', 'typescript'),
+  question('ts-generic-array', 'Array<string> means ___', ['one string only', 'an array of strings', 'a string or array', 'a typed object'], 1, 'Generic syntax like Array<string> describes the element type inside the array.', 'typescript'),
+  question('ts-readonly', 'readonly id: string means the property ___ after creation.', ['must be async', 'cannot be reassigned', 'becomes optional', 'must be a number'], 1, 'readonly helps prevent accidental reassignment of that property.', 'typescript'),
+  question('ts-record', 'Record<string, number> describes an object with ___', ['number keys and string values', 'string keys and number values', 'only one property', 'array indexes only'], 1, 'Record<K, V> creates an object type where keys use K and values use V.', 'typescript'),
+  question('js-object-keys', 'Object.___(pet) returns an array of the object\'s property names.', ['keys', 'values', 'entries', 'names'], 0, 'Object.keys returns an array containing the object\'s own enumerable property names.', 'javascript'),
+  question('js-object-values', 'Object.___(pet) returns an array of the object\'s values.', ['keys', 'entries', 'values', 'items'], 2, 'Object.values collects the object\'s values into an array.', 'javascript'),
+  question('js-object-entries', 'Object.___(pet) returns [key, value] pairs.', ['keys', 'values', 'assign', 'entries'], 3, 'Object.entries is useful when you need both keys and values together.', 'javascript'),
+  question('js-array-foreach', 'items.___(item => console.log(item)); runs the callback for each array item.', ['map', 'forEach', 'find', 'reduce'], 1, 'forEach loops through each item when you want a side effect instead of a returned array.', 'javascript'),
+  question('js-array-sort', 'numbers.sort((a, b) => a - b); sorts the array in ___ order.', ['descending', 'random', 'ascending', 'string-only'], 2, 'Subtracting a - b tells sort to place smaller numbers first.', 'javascript'),
+  question('js-array-slice', 'items.___(0, 3) returns a shallow copy of part of an array.', ['splice', 'slice', 'split', 'trim'], 1, 'slice returns a portion of an array without mutating the original.', 'javascript'),
+  question('js-array-splice', 'items.splice(1, 1) will usually ___ the original array.', ['clone', 'sort', 'mutate', 'freeze'], 2, 'splice changes the original array by removing or inserting items.', 'javascript'),
+  question('js-default-parameter', 'function greet(name = "Friend") { ... } uses a ___ parameter value.', ['fallback', 'default', 'spread', 'rest'], 1, 'Default parameters provide a value when the caller does not pass one.', 'javascript'),
+  question('js-rest-params', 'function total(...values) { ... }\n...values is a ___ parameter.', ['spread-only', 'rest', 'union', 'strict'], 1, 'Rest parameters collect remaining arguments into an array.', 'javascript'),
+  question('js-ternary', 'isHungry ? "Feed now" : "All good" uses the ___ operator.', ['coalescing', 'ternary', 'spread', 'comparison'], 1, 'The ternary operator chooses one of two values based on a condition.', 'javascript'),
+  question('js-logical-or', 'const label = custom || "Default";\n|| falls back when the left side is ___', ['truthy', 'falsy', 'an array', 'a number only'], 1, 'Logical OR returns the right side when the left side is falsy.', 'javascript'),
+  question('js-truthy-empty-string', 'An empty string "" is considered ___ in JavaScript.', ['truthy', 'falsy', 'numeric', 'nullish-only'], 1, 'Empty strings are falsy values.', 'javascript'),
+  question('js-truthy-empty-array', 'An empty array [] is considered ___ in JavaScript.', ['truthy', 'falsy', 'null', 'NaN'], 0, 'Arrays are objects, and objects are truthy even when empty.', 'javascript'),
+  question('js-settimeout', 'setTimeout(() => save(), 1000); runs the callback after about ___', ['1 millisecond', '1 second', '10 seconds', '1 minute'], 1, 'setTimeout uses milliseconds, so 1000 means about one second.', 'javascript'),
+  question('js-parse-int', 'Which function converts "42" into the number 42?', ['parseInt', 'stringify', 'join', 'includes'], 0, 'parseInt reads a string and converts it to an integer number.', 'javascript'),
+  question('js-number-constructor', 'Number("5") returns a ___ value.', ['string', 'number', 'boolean', 'function'], 1, 'Number converts a value into a number when possible.', 'javascript'),
+  question('js-nan-check', 'Which helper is safest for checking whether a value is NaN?', ['value === NaN', 'Number.isNaN(value)', 'value == NaN', 'typeof value === NaN'], 1, 'Number.isNaN is the reliable built-in check for NaN values.', 'javascript'),
+  question('js-string-split', '"a,b,c".___(",") returns ["a", "b", "c"].', ['join', 'slice', 'split', 'replace'], 2, 'split breaks a string into an array using the given separator.', 'javascript'),
+  question('js-array-join', '["React", "Native"].___(" ") returns "React Native".', ['concat', 'join', 'split', 'merge'], 1, 'join combines array items into a string with the separator between them.', 'javascript'),
+  question('js-string-trim', 'name.___() removes extra whitespace from the start and end of a string.', ['strip', 'trim', 'slice', 'clean'], 1, 'trim removes leading and trailing whitespace from a string.', 'javascript'),
+  question('js-array-indexof', 'items.___("cat") returns the position of "cat" or -1 if not found.', ['find', 'includes', 'indexOf', 'position'], 2, 'indexOf returns the first matching index in an array or string.', 'javascript'),
+  question('js-for-of', 'for (const item ___ items) { ... }', ['in', 'of', 'from', 'at'], 1, 'for...of loops over iterable values such as array items.', 'javascript'),
+  question('js-for-in', 'for (const key ___ pet) { ... } is commonly used for object keys.', ['of', 'in', 'at', 'from'], 1, 'for...in iterates over object property keys.', 'javascript'),
+  question('js-destructure-alias', 'const { name: petName } = pet;\npetName is an example of a destructuring ___', ['spread', 'alias', 'closure', 'guard'], 1, 'You can rename destructured properties with an alias like name: petName.', 'javascript'),
+  question('js-short-circuit-and', 'isReady && startGame() means startGame runs only when isReady is ___', ['false', 'undefined only', 'truthy', 'an array'], 2, 'Logical AND short-circuits, so the right side runs only if the left side is truthy.', 'javascript'),
+  question('js-shallow-copy', 'Which expression creates a shallow copy of an array?', ['items.copy()', '[...items]', 'items.mutate()', 'Array.items(items)'], 1, 'Spread syntax creates a new array with the same top-level items.', 'javascript'),
+  question('js-math-random', 'Math.random() returns a number between ___', ['1 and 10', '0 and 1', '0 and 100', '-1 and 1'], 1, 'Math.random returns a decimal number greater than or equal to 0 and less than 1.', 'javascript'),
+  question('js-date-now', 'Date.now() returns the current time as ___', ['a Date object', 'milliseconds since the Unix epoch', 'a formatted string', 'seconds only'], 1, 'Date.now returns the current timestamp in milliseconds.', 'javascript'),
+  question('ts-tuple', 'type Point = [number, number];\nThis is called a ___ type.', ['union', 'tuple', 'record', 'enum'], 1, 'Tuples describe arrays with a fixed length and specific types at each position.', 'typescript'),
+  question('ts-intersection', 'type PetWithOwner = Pet & OwnerInfo;\nThe & creates an ___ type.', ['intersection', 'optional', 'array', 'indexed'], 0, 'Intersection types combine multiple types into one.', 'typescript'),
+  question('ts-keyof', 'keyof PetState produces a union of the type\'s ___', ['values', 'methods only', 'property names', 'generic constraints'], 2, 'keyof creates a union of property names from a type.', 'typescript'),
+  question('ts-type-assertion', 'value as string is called a type ___', ['assertion', 'union', 'mapping', 'extension'], 0, 'A type assertion tells TypeScript to treat a value as a more specific type.', 'typescript'),
+  question('ts-array-generic', 'const pets: Array<Pet> = [];\nThis is another way to write ___', ['Pet[]', 'readonly Pet', 'Record<Pet>', 'Pet | []'], 0, 'Array<Pet> and Pet[] describe the same array element type.', 'typescript'),
+  question('ts-parameter-type', 'function feed(amount: number) { ... }\nnumber is the parameter\'s ___', ['default', 'type annotation', 'namespace', 'union'], 1, 'Type annotations specify what type a variable or parameter should have.', 'typescript'),
+  question('ts-return-inference', 'If a function clearly returns a string, TypeScript can often ___ the return type.', ['ignore', 'infer', 'freeze', 'omit at runtime'], 1, 'TypeScript can infer types from the code you write, including return values.', 'typescript'),
+  question('ts-string-literal', 'const mode: "dark" = "dark";\n"dark" here is a string ___ type.', ['array', 'literal', 'fallback', 'mapped'], 1, 'Literal types lock a value to one exact string, number, or boolean.', 'typescript'),
+  question('ts-indexed-access', 'PetState["name"] gives the type of the ___ property.', ['runtime', 'name', 'style', 'function'], 1, 'Indexed access types let you read one property type from another type.', 'typescript'),
+  question('ts-enum-basic', 'An enum is commonly used to represent a small set of ___ values.', ['related named', 'random any', 'JSX-only', 'mutable object'], 0, 'Enums group related named constants into a single type-like structure.', 'typescript'),
+  question('ts-never', 'The never type usually represents values that ___', ['can be any type', 'never occur or never return', 'must be strings', 'come from AsyncStorage'], 1, 'never is used for impossible states or functions that do not complete normally.', 'typescript'),
+  question('ts-optional-param', 'function rename(name?: string) { ... }\nThis parameter can be ___', ['omitted', 'only null', 'only numbers', 'readonly'], 0, 'A parameter with ? can be left out by the caller.', 'typescript'),
+  question('ts-default-param-type', 'function feed(amount = 3) { ... }\nTypeScript usually infers amount as a ___', ['string', 'number', 'boolean', 'tuple'], 1, 'A numeric default value leads TypeScript to infer a number type.', 'typescript'),
+  question('ts-discriminated-union', 'A union where each variant has a shared tag like type: "success" or type: "error" is called a ___ union.', ['discriminated', 'readonly', 'generic', 'tuple'], 0, 'Discriminated unions make it easier to narrow between related object variants.', 'typescript'),
+  question('ts-type-guard-in', 'if ("message" in result) { ... }\nThis can act as a type ___', ['array', 'guard', 'record', 'alias'], 1, 'Checks like the in operator help narrow a union to a more specific type.', 'typescript'),
+  question('ts-non-null', 'value!.length uses the non-null assertion operator to tell TypeScript the value is not ___ or undefined.', ['string', 'null', 'readonly', 'generic'], 1, 'The ! operator removes null and undefined from a type at that point in the code.', 'typescript'),
+  question('ts-optional-chaining-type', 'user?.profile?.name is useful when nested properties may be ___', ['constant', 'missing', 'readonly only', 'arrays only'], 1, 'Optional chaining works well when values may be undefined along the path.', 'typescript'),
+  question('ts-nullish-coalescing-type', 'const label = title ?? "Untitled";\nThis gives a fallback when title is ___', ['0', 'false', 'null or undefined', 'an empty array'], 2, 'Nullish coalescing keeps valid falsy values like 0 or empty string, but falls back for nullish ones.', 'typescript'),
+  question('ts-readonly-object', 'Readonly<PetState> makes object properties ___', ['optional', 'readonly', 'arrays', 'enums'], 1, 'Readonly is a utility type that marks every property as not assignable.', 'typescript'),
+  question('ts-required-utility', 'Required<Props> makes all properties ___', ['readonly', 'required', 'numbers', 'nullable'], 1, 'Required is the opposite of Partial and removes optional markers.', 'typescript'),
+  question('ts-extract-utility', 'Extract<A, B> keeps the union members from A that are also in ___', ['B', 'A only', 'JSX', 'runtime values'], 0, 'Extract is a utility type for pulling overlapping members out of a union.', 'typescript'),
+  question('ts-exclude-utility', 'Exclude<A, B> removes from A the union members assignable to ___', ['A', 'B', 'unknown', 'never'], 1, 'Exclude is the opposite of Extract for union members.', 'typescript'),
+  question('ts-generic-constraint', 'function logLength<T extends { length: number }>(value: T) { ... }\nThis generic uses a ___', ['constraint', 'tuple', 'readonly cast', 'module'], 0, 'The extends clause constrains T so only values with length are allowed.', 'typescript'),
+  question('ts-interface-vs-type', 'Both interface and type can describe object shapes, but interfaces are especially common for ___', ['component props and object contracts', 'math only', 'Metro config', 'Android manifests'], 0, 'Interfaces are often used to model props, API responses, and shared object contracts.', 'typescript'),
+  question('ts-void-callback', 'setTimeout(() => console.log("hi"), 1000);\nThe callback here usually has a return type of ___', ['string', 'void', 'number[]', 'never[]'], 1, 'Callbacks that do not return anything useful are usually typed as void.', 'typescript'),
+  question('ts-state-union', 'const [status, setStatus] = useState<"idle" | "loading">("idle");\nThis limits status to ___', ['any string', 'two specific values', 'numbers only', 'null only'], 1, 'Generic state types can restrict state to a small safe set of valid values.', 'typescript'),
+  question('ts-generic-pair', 'type Pair<T> = [T, T];\nPair<number> becomes ___', ['[string, string]', '[number, number]', 'number[] only', 'Record<number, number>'], 1, 'A generic tuple type substitutes T with the provided type argument.', 'typescript'),
+  question('ts-module-export-type', 'export type PetId = string; allows the type to be ___ in other files.', ['rendered', 'imported', 'mounted', 'memoized'], 1, 'Exported types can be imported and reused across the project.', 'typescript'),
+  question('ts-unknown-vs-any', 'unknown differs from any because unknown requires ___ before usage.', ['narrowing', 'stringifying', 'memoization', 'sorting'], 0, 'unknown preserves safety by forcing you to check the value before using it.', 'typescript'),
+  question('ts-satisfies', 'The satisfies operator helps confirm that a value matches a type while keeping more specific ___ info.', ['runtime', 'literal', 'Metro', 'navigation'], 1, 'satisfies can validate shape without widening useful literal information too aggressively.', 'typescript'),
+  question('ts-object-index-signature', 'type Scores = { [name: string]: number };\nThis is an index ___', ['signature', 'screen', 'effect', 'assertion'], 0, 'Index signatures describe objects whose keys are not known in advance.', 'typescript'),
+  question('ts-union-narrow-switch', 'A switch on a union tag like status.type is often used to ___ the union.', ['clone', 'narrow', 'sort', 'flatten'], 1, 'Switch statements work well with discriminated unions because each case narrows the type.', 'typescript'),
 ];
 
 const shuffle = <T,>(items: T[]) => {
@@ -124,22 +229,39 @@ const shuffle = <T,>(items: T[]) => {
 
 const DEFAULT_QUESTIONS_PER_RUN = 8;
 
-export const getMiniGameQuestionCount = () => MINIGAME_QUESTION_BANK.length;
+export const getMiniGameQuestionCount = (trackId?: MiniGameTrackId) => {
+  if (!trackId) {
+    return MINIGAME_QUESTION_BANK.length;
+  }
 
-export const getMiniGameDeck = (alreadySeenQuestionIds: string[] = [], count = DEFAULT_QUESTIONS_PER_RUN) => {
+  return MINIGAME_QUESTION_BANK.filter(questionItem => questionItem.trackId === trackId).length;
+};
+
+export const getMiniGameDeck = (
+  alreadySeenQuestionIds: string[] = [],
+  trackId: MiniGameTrackId = 'react-native',
+  count = DEFAULT_QUESTIONS_PER_RUN,
+) => {
+  const trackQuestions = MINIGAME_QUESTION_BANK.filter(questionItem => questionItem.trackId === trackId);
   const seen = new Set(alreadySeenQuestionIds);
-  const normalizedCount = Math.max(1, Math.min(count, MINIGAME_QUESTION_BANK.length));
-  const unseenQuestions = MINIGAME_QUESTION_BANK.filter(questionItem => !seen.has(questionItem.id));
+  const normalizedCount = Math.max(1, Math.min(count, trackQuestions.length));
+  const unseenQuestions = trackQuestions.filter(questionItem => !seen.has(questionItem.id));
   const shuffledUnseen = shuffle(unseenQuestions);
 
   if (shuffledUnseen.length >= normalizedCount) {
     return shuffledUnseen.slice(0, normalizedCount);
   }
 
-  const seenQuestions = MINIGAME_QUESTION_BANK.filter(questionItem => seen.has(questionItem.id));
+  const seenQuestions = trackQuestions.filter(questionItem => seen.has(questionItem.id));
   const shuffledSeen = shuffle(seenQuestions);
   const combined = [...shuffledUnseen, ...shuffledSeen];
 
   return combined.slice(0, normalizedCount);
 };
+
+
+
+
+
+
 

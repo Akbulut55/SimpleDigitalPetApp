@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppPalette } from '../types/pet';
-import { MiniGameQuestion } from '../types/miniGame';
+import { MiniGameQuestion, MiniGameTrack, MiniGameTrackId } from '../types/miniGame';
 import { ActionButton } from './ActionButton';
-import { getMiniGameDeck } from '../utils/miniGame';
+import { getMiniGameDeck, getMiniGameQuestionCount, MINIGAME_TRACKS } from '../utils/miniGame';
 
 type MiniGameScreenProps = {
   onComplete: (correctAnswers: number, lost: boolean, usedQuestionIds: string[]) => void;
@@ -34,10 +34,15 @@ const TOTAL_SECONDS = 60;
 const MAX_WRONG_ANSWERS = 3;
 
 export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, palette }: MiniGameScreenProps) => {
-  const createQuestionDeck = () => getMiniGameDeck(alreadySeenQuestionIds);
-
-  const [questions, setQuestions] = useState<ReturnType<typeof createQuestionDeck>>(() => createQuestionDeck());
+  const isDarkMode = palette.text === '#f8fafc';
+  const [selectedTrackId, setSelectedTrackId] = useState<MiniGameTrackId | null>(null);
+  const [questions, setQuestions] = useState<MiniGameQuestion[]>([]);
+  const availableTracks: ReadonlyArray<MiniGameTrack> = MINIGAME_TRACKS ?? [];
   const usedQuestionIds = useMemo(() => questions.map(question => question.id), [questions]);
+  const activeTrack = useMemo(
+    () => (selectedTrackId ? availableTracks.find((track: MiniGameTrack) => track.id === selectedTrackId) ?? null : null),
+    [availableTracks, selectedTrackId],
+  );
 
   const [timeLeft, setTimeLeft] = useState(TOTAL_SECONDS);
   const [index, setIndex] = useState(0);
@@ -50,8 +55,8 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
   const timeProgress = Math.max(0, (timeLeft / TOTAL_SECONDS) * 100);
   const codeLines = current?.prompt.split('\n');
 
-  const handleRestart = () => {
-    setQuestions(createQuestionDeck());
+  const resetRoundState = (nextQuestions: MiniGameQuestion[]) => {
+    setQuestions(nextQuestions);
     setTimeLeft(TOTAL_SECONDS);
     setIndex(0);
     setCorrectAnswers(0);
@@ -60,8 +65,26 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
     setFeedback(null);
   };
 
+  const startTrack = (trackId: MiniGameTrackId) => {
+    setSelectedTrackId(trackId);
+    resetRoundState(getMiniGameDeck(alreadySeenQuestionIds, trackId));
+  };
+
+  const handleRestart = () => {
+    if (!selectedTrackId) {
+      return;
+    }
+
+    resetRoundState(getMiniGameDeck(alreadySeenQuestionIds, selectedTrackId));
+  };
+
+  const handleChangeTrack = () => {
+    setSelectedTrackId(null);
+    resetRoundState([]);
+  };
+
   useEffect(() => {
-    if (status || feedback) {
+    if (!selectedTrackId || !current || status || feedback) {
       return;
     }
 
@@ -76,7 +99,7 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [feedback, status]);
+  }, [current, feedback, selectedTrackId, status]);
 
   const finishGame = (nextCorrect: number, nextWrong: number, lost: boolean, reason: string) => {
     if (status) {
@@ -94,10 +117,10 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
   };
 
   useEffect(() => {
-    if (timeLeft === 0 && !status && !feedback) {
+    if (selectedTrackId && current && timeLeft === 0 && !status && !feedback) {
       finishGame(correctAnswers, wrongAnswers, true, 'Time is up. Try faster next time!');
     }
-  }, [correctAnswers, feedback, onComplete, status, timeLeft, usedQuestionIds, wrongAnswers]);
+  }, [correctAnswers, current, feedback, selectedTrackId, status, timeLeft, usedQuestionIds, wrongAnswers]);
 
   const buildFeedback = (question: MiniGameQuestion, selectedIndex: number): AnswerFeedback => {
     const isCorrect = selectedIndex === question.correctOptionIndex;
@@ -193,10 +216,57 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
     return styles.optionButtonDim;
   };
 
+  if (!selectedTrackId) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerWrap}>
+          <Text style={[styles.title, { color: palette.text }]}>Choose a Learning Track</Text>
+          <Text style={[styles.subtitle, { color: palette.textMuted }]}>Pick what you want to practice. The quiz rules stay the same, but the questions now focus on a specific skill area.</Text>
+        </View>
+
+        <View style={styles.trackList}>
+          {availableTracks.map((track: MiniGameTrack) => (
+            <TouchableOpacity
+              key={track.id}
+              style={[
+                styles.trackCard,
+                {
+                  borderColor: palette.panelBorder,
+                  backgroundColor: palette.surface,
+                  shadowColor: palette.shadowColor,
+                },
+              ]}
+              onPress={() => startTrack(track.id)}
+            >
+              <View style={[styles.trackAccent, { backgroundColor: track.accentColor }]} />
+              <View style={styles.trackContent}>
+                <View style={styles.trackHeaderRow}>
+                  <Text style={[styles.trackTitle, { color: palette.text }]}>{track.title}</Text>
+                  <View style={[styles.trackBadge, { backgroundColor: palette.chipBackground, borderColor: palette.chipBorder }]}>
+                    <Text style={[styles.trackBadgeText, { color: palette.textMuted }]}>{getMiniGameQuestionCount(track.id)} questions</Text>
+                  </View>
+                </View>
+                <Text style={[styles.trackDescription, { color: palette.textMuted }]}>{track.description}</Text>
+                <View style={styles.trackFooter}>
+                  <Text style={[styles.trackFooterText, { color: track.accentColor }]}>60 seconds · 3 mistakes max · explanations included</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <ActionButton title="Exit Quiz" color="#f97316" onPress={onBack} isDarkMode={isDarkMode} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <View style={[styles.headerWrap, { alignItems: 'center' }]}> 
-        <Text style={[styles.title, { color: palette.text }]}>React Native Fast Quiz</Text>
+      <View style={styles.headerWrap}>
+        <View style={[styles.activeTrackBadge, { backgroundColor: activeTrack?.accentColor ?? '#06b6d4' }]}>
+          <Text style={styles.activeTrackBadgeText}>{activeTrack?.title ?? 'Quiz Track'}</Text>
+        </View>
+        <Text style={[styles.title, { color: palette.text }]}>{activeTrack?.title ?? 'Quiz'} Fast Quiz</Text>
         <Text style={[styles.subtitle, { color: palette.textMuted }]}>Answer quickly, then read the explanation before moving to the next question.</Text>
       </View>
 
@@ -216,7 +286,7 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
           </View>
         </View>
         <View style={[styles.timerTrack, { backgroundColor: palette.mutedTrack }]}>
-          <View style={[styles.timerFill, { width: `${timeProgress}%` }]} />
+          <View style={[styles.timerFill, { width: `${timeProgress}%`, backgroundColor: activeTrack?.accentColor ?? '#8b5cf6' }]} />
         </View>
       </View>
 
@@ -260,9 +330,9 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
             <Text style={[styles.explanationText, { color: palette.textMuted }]}>{feedback.explanation}</Text>
             <ActionButton
               title={feedback.shouldFinish ? 'See Results' : 'Next Question'}
-              color={feedback.shouldFinish ? '#f97316' : '#06b6d4'}
+              color={feedback.shouldFinish ? '#f97316' : activeTrack?.accentColor ?? '#06b6d4'}
               onPress={handleContinue}
-              isDarkMode={palette.text === '#f8fafc'}
+              isDarkMode={isDarkMode}
             />
           </View>
         ) : null}
@@ -270,16 +340,20 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, pal
         {!!status ? (
           <View style={[styles.resultWrap, { borderTopColor: palette.chipBorder }]}> 
             <Text style={[styles.resultTitle, { color: palette.text }]}>{status.lost ? 'Quiz Lost' : 'Quiz Completed'}</Text>
+            <Text style={[styles.resultText, { color: palette.textMuted }]}>Track: {activeTrack?.title}</Text>
             <Text style={[styles.resultText, { color: palette.textMuted }]}>Correct: {status.correctAnswers}</Text>
             <Text style={[styles.resultText, { color: palette.textMuted }]}>Wrong: {status.wrongAnswers}</Text>
             <Text style={[styles.resultText, { color: palette.textMuted }]}>Status: {status.reason}</Text>
             <Text style={[styles.resultCoins, { color: '#16a34a' }]}>Coins earned: {status.lost ? 0 : status.correctAnswers}</Text>
-            <ActionButton title="Try Again" color="#06b6d4" onPress={handleRestart} isDarkMode={palette.text === '#f8fafc'} />
+            <ActionButton title="Try Again" color={activeTrack?.accentColor ?? '#06b6d4'} onPress={handleRestart} isDarkMode={isDarkMode} />
           </View>
         ) : null}
       </View>
 
-      <ActionButton title="Exit Quiz" color="#f97316" onPress={onBack} isDarkMode={palette.text === '#f8fafc'} />
+      <View style={styles.footerActions}>
+        <ActionButton title="Change Track" color="#8b5cf6" onPress={handleChangeTrack} isDarkMode={isDarkMode} />
+        <ActionButton title="Exit Quiz" color="#f97316" onPress={onBack} isDarkMode={isDarkMode} />
+      </View>
     </View>
   );
 };
@@ -294,7 +368,7 @@ const styles = StyleSheet.create({
   headerWrap: {
     width: '100%',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   title: {
     fontSize: 30,
@@ -305,6 +379,74 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     paddingHorizontal: 10,
+    lineHeight: 20,
+  },
+  trackList: {
+    width: '100%',
+    gap: 12,
+  },
+  trackCard: {
+    width: '100%',
+    borderRadius: 22,
+    borderWidth: 1,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  trackAccent: {
+    width: 8,
+  },
+  trackContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  trackHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  trackTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    flex: 1,
+  },
+  trackBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  trackBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  trackDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  trackFooter: {
+    marginTop: 2,
+  },
+  trackFooterText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  activeTrackBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  activeTrackBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   scoreSurface: {
     width: '100%',
@@ -341,7 +483,6 @@ const styles = StyleSheet.create({
   },
   timerFill: {
     height: '100%',
-    backgroundColor: '#8b5cf6',
   },
   card: {
     width: '100%',
@@ -459,4 +600,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  footerActions: {
+    width: '100%',
+    gap: 10,
+  },
 });
+
+
+
+

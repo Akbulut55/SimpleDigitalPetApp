@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { AchievementsScreen } from './src/components/AchievementsScreen';
@@ -551,8 +551,10 @@ const App = () => {
     ...moodTheme,
     sprite: displaySprite,
     spriteId: currentCat.spriteId,
+    cardBg: isDarkMode ? activePalette.surfaceHighlight : moodTheme.cardBg,
+    border: isDarkMode ? activePalette.panelBorder : moodTheme.border,
     accent: currentVariant.accent,
-    accentSoft: currentVariant.surface,
+    accentSoft: isDarkMode ? activePalette.chipBackground : currentVariant.surface,
     variantLabel: currentVariant.label,
   };
   const isFeedInProgress = isActionLocked || runningAction?.type === 'feed';
@@ -754,6 +756,7 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
 
 
 
