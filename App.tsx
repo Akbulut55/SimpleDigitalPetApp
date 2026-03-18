@@ -73,6 +73,9 @@ const FEED_SLEEP_SEQUENCE = [
 
 const FEED_SLEEP_ACTION_FPS = 24;
 const FEED_EAT_ACTION_FPS = 8;
+const PASSIVE_DECAY_INTERVAL_MS = 180000;
+const PASSIVE_HUNGER_GAIN = 1;
+const PASSIVE_HAPPINESS_DROP = 1;
 
 const PALETTES = {
   light: {
@@ -250,6 +253,35 @@ const App = () => {
       save();
     }
   }, [isHydrated, petState]);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setPetState(previous => {
+        const targetCatId = previous.activeCatId;
+        const nextState = normalizeState({
+          ...previous,
+          cats: previous.cats.map(cat =>
+            cat.id === targetCatId
+              ? {
+                  ...cat,
+                  hunger: cat.hunger + PASSIVE_HUNGER_GAIN,
+                  happiness: cat.happiness - PASSIVE_HAPPINESS_DROP,
+                }
+              : cat,
+          ),
+        });
+
+        applyAchievements(nextState, previous, targetCatId);
+        return nextState;
+      });
+    }, PASSIVE_DECAY_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [isHydrated]);
 
   useEffect(() => {
     return () => {
@@ -722,3 +754,10 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
+
+
+
+
+
+
