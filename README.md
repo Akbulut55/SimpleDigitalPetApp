@@ -1,100 +1,129 @@
 # Simple Digital Pet App
 
-Bu proje, sınıf içi bir mobil uygulama challenge görevi için geliştirilmiş basit bir **React Native dijital evcil hayvan uygulamasıdır**.
+Bu proje, dijital bir evcil hayvan oyunu temeline, mini-quiz tabanlı öğrenme akışını ve oyunlaştırma sistemini ekleyerek geliştirilmiş bir React Native uygulamasıdır. Ana mantığı korunmuş, ancak çok ekranlı akış ve kalıcı ilerleme ile genişletilmiştir.
 
-Uygulamada bir evcil hayvanın **adı** ve **türü** gösterilir. Kullanıcı, **Besle** ve **Oyna** butonlarıyla evcil hayvanın **açlık** ve **mutluluk** değerlerini değiştirebilir.
+## Projenin amacı ve oyunlaştırma özellikleri
+
+Oyunun amacı, kullanıcıyı hem evcil hayvan bakımıyla meşgul etmek hem de öğrenme odaklı mini oyunlarla geri bildirimli bir ilerleme sistemi sunmaktır.
+
+- **Evcil Hayvan Bakımı**
+  - Açlık (`hunger`) ve mutluluk (`happiness`) değerlerini yönetme
+  - **Besle** ve **Oyna** aksiyonlarıyla anlık etki
+  - Tüm değerler `0`–`100` aralığında sınırlıdır
+- **Kedi Varyantları ve Kilit Sistemi**
+  - Varsayılan olarak Gri kedi
+  - Diğer kedi tipleri (ör. Beyaz, Kahverengi) coin ile açılır
+  - Her kedi için ayrı ad, açlık ve mutluluk durumu
+- **Mini Oyun (Learning Loop)**
+  - React Native, JavaScript ve TypeScript track’leri
+  - Zamanlı soru akışı ve hata sınırı
+  - Her sorudan sonra doğru cevap açıklaması
+  - Başarı puanı/coin kazanma döngüsü
+- **Başarı Sistemi**
+  - Başarılar tamamlanana kadar başlık olarak gizli görünür
+  - Tamamlandığında detayları açılır
+- **Uzun Vadeli Gelişim**
+  - XP, coin, başarılar ve kedi durumları kalıcıdır
+  - Zamanla pasif açlık artışı ve mutluluk düşüşü uygulanır
+  - Karanlık/aydınlık tema desteği
 
 ## Özellikler
 
-- Evcil hayvanın adını ve türünü gösterir
-- Açlık ve mutluluk değerlerini gösterir
-- **Besle** butonu ile açlığı azaltır
-- **Oyna** butonu ile mutluluğu artırır
-- Değerler `0` ile `100` arasında sınırlandırılmıştır
-- Duruma göre değişen ruh hali metni bulunur
-- Duruma göre değişen emoji kullanılır
-- Duruma göre değişen kart rengi bulunur
+- Tek projede 4 ana ekran: Ana Pet, Mini-Game, Ayarlar, Başarılar
+- Modern ve dinamik StyleSheet temelli arayüz
+- Pet görselini destekleyen Sprite animasyon sistemi
+- Tema, kart ve buton hiyerarşisiyle okunabilir UI
+- Oyuncu verileri için kalıcı saklama (AsyncStorage)
 
 ## Kullanılan Teknolojiler
 
 - React Native
 - TypeScript
-- StyleSheet
-- Flexbox
-
-## Projenin Amacı
-
-Bu projenin amacı şunları pratik etmektir:
-
-- tekrar kullanılabilir component oluşturma
-- **props** ve **state** kullanımı
-- buton etkileşimleri ile veri güncelleme
-- state’e göre arayüzü dinamik olarak değiştirme
-- elle yazılmış ilk sürümü AI desteğiyle iyileştirme ve refactor etme
-
-## Bileşen Yapısı
-
-### `App`
-Uygulamanın ana ekranıdır.
-
-Sorumlulukları:
-- `hunger` state’ini tutmak
-- `happiness` state’ini tutmak
-- pet component’ine props göndermek
-- **Besle** ve **Oyna** işlemlerini yönetmek
-
-### `Pet`
-Tekrar kullanılabilir evcil hayvan component’idir.
-
-Gösterdiği bilgiler:
-- evcil hayvan adı
-- türü
-- açlık değeri
-- mutluluk değeri
-- ruh hali
-- emoji
-- aksiyon butonları
-
-## State Mantığı
-
-- **Besle** işlemi açlığı azaltır
-- **Oyna** işlemi mutluluğu artırır
-- **Oyna** işlemi açlığı bir miktar artırabilir
-- tüm değerler `0` ile `100` arasında tutulur
+- AsyncStorage
+- StyleSheet / Flexbox
+- Tek dosya tabanlı mini oyun verisi
+- Keşfedilebilir, modüler React component yapısı
 
 ## Ekran Görüntüleri
 
 <p align="center">
-  <img src="./screenshots/happy-state.png" width="30%" />
-  <img src="./screenshots/sad-state.png" width="30%" />
-  <img src="./screenshots/hungry-state.png" width="30%" />
+  <img src="./screenshots/ingame-1.png" width="160" />
+  <img src="./screenshots/ingame-2.png" width="160" />
+  <img src="./screenshots/ingame-3.png" width="160" />
+</p>
+<p align="center">
+  <img src="./screenshots/ingame-4.png" width="160" />
+  <img src="./screenshots/ingame-5.png" width="160" />
+  <img src="./screenshots/ingame-6.png" width="160" />
 </p>
 
-## Nasıl Çalıştırılır
+## Bileşen Yapısı
+
+- `App.tsx`
+  - Uygulama akışı ve global state
+  - Ekran yönlendirme, kalıcı veri yönetimi, ödül mantığı
+- `PixelCat.tsx`
+  - Kedi görseli ve animasyon kontrolü
+- `PetCard.tsx`
+  - Ana pet bilgileri, stat çubukları ve etkileşim alanı
+- `MiniGameScreen.tsx`
+  - Track bazlı mini-quiz akışı ve soru mantığı
+- `SettingsScreen.tsx`
+  - Kedi ismi değiştirme, kedi seçimi, coin ile açma
+- `AchievementsScreen.tsx`
+  - Başarı takibi, kilitli/açık gösterim
+- `src/utils/*`
+  - Mini oyun soru havuzu, skor/puan yardımcı fonksiyonları
+- `src/types/*`
+  - Tip güvenliği ve model tanımları
+
+## State Mantığı (Kısa)
+
+- `hunger` ve `happiness` her işlemden sonra güvenli şekilde sınırlandırılır (`clamp`)
+- Besleme açıkça açlık düşürür
+- Oyun ve mini oyun etkileşimleri mutluluğu etkiler
+- Mini oyun kayıpları, zaman limiti ve coin kazanımı ayrı kurallarla yönetilir
+- Her kedi türü için ayrı durum saklanırken, coin/XP/başarılar oyuncuya özeldir ama paylaşılan sistemle tutulur
+
+## Adım adım "Nasıl Çalıştırılır?" (Installation & Run)
+
+### 1) Bağımlılıkları kur
 
 ```bash
 npm install
+```
+
+### 2) Metro’yu başlat
+
+```bash
 npm start
+```
+
+### 3) Android uygulamasını başlat
+
+Emülatör veya fiziksel cihaz bağlı ve USB debug açık olmalı.
+
+```bash
 npm run android
 ```
 
-## Öğrenilenler
+### 4) Üretim APK üretimi (isteğe bağlı)
 
-Bu projede şunları öğrendim:
+```bash
+cd android
+.\\gradlew.bat assembleRelease
+```
 
-- `useState` ile state yönetimi
-- props ile veri aktarma
-- basit ve etkileşimli bir component geliştirme
-- `Math.min` ve `Math.max` ile state değerlerini sınırlandırma
-- Flexbox ve StyleSheet ile daha düzenli bir arayüz oluşturma
-- ilk yazılan kaba kodu daha temiz bir yapıya dönüştürme
+## 1 dakikalık YouTube tanıtım videosunun linki
 
-## AI Prompt Özeti
+- [YouTube Tanıtım Videosu](https://youtube.com/shorts/J9XgYdvjVMY?feature=share)
 
-**Kullanılan prompt:**
+## Yayın (Production) Notu
 
-> I wrote this React Native digital pet app myself as a rough skeleton. Please improve this code as a senior developer, but keep the same basic logic and structure. Center the layout using Flexbox, add a modern StyleSheet design, add dynamic emoji and dynamic mood text based on hunger and happiness, optionally change card/background color depending on the pet state, keep hunger and happiness between 0 and 100, refactor with clean code principles, and briefly explain what you improved and why.
+Projede release imzalama yapılandırması eklenmiştir (`android/key.properties` ve `android/app/build.gradle`). İmzalı bir `release` build için gerekli yapılandırmalar bu dosyalarda tutulur.
 
-**AI desteğinden öğrendiğim kısa not:**
+## Kurulum Notları
 
-Açlık ve mutluluk gibi state değerlerinin `Math.max` ve `Math.min` ile sınırlandırılmasının, hatalı değer oluşmasını engellediğini öğrendim. Ayrıca emoji, ruh hali metni ve renk gibi arayüz detaylarının doğrudan state’e göre türetilebileceğini gördüm.
+- `.gitignore` içinde keystore ve APK/AAB/`android/key.properties` gibi hassas dosyalar korunmaktadır.
+- Kullanıcı verisi ve ayarlar cihazda saklanır, uygulama yeniden başlatıldığında geri yüklenir.
+
