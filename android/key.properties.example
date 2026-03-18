@@ -1,0 +1,9 @@
+# Copy this file to android/key.properties and fill your real values.
+# Keep the file in this exact location and name so Gradle can load it automatically.
+
+STORE_FILE=app/simple-digital-pet-release.jks
+STORE_PASSWORD=CHANGE_ME_STORE_PASSWORD
+KEY_ALIAS=CHANGE_ME_ALIAS
+KEY_PASSWORD=CHANGE_ME_KEY_PASSWORD
+
+

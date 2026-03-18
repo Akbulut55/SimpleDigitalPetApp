@@ -2,6 +2,9 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+import java.io.FileInputStream
+import java.util.Properties
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -39,7 +42,7 @@ react {
     //   The entry file for bundle generation. Default is 'index.android.js' or 'index.js'
     // entryFile = file("../js/MyApplication.android.js")
     //
-    //   A list of extra flags to pass to the 'bundle' commands.
+    //   The list of extra flags to pass to the 'bundle' commands.
     //   See https://github.com/react-native-community/cli/blob/main/docs/commands.md#bundle
     // extraPackagerArgs = []
 
@@ -58,6 +61,76 @@ react {
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
 def enableProguardInReleaseBuilds = false
+
+/**
+ * Release signing setup
+ */
+def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.toLowerCase().contains("release")
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+
+def releaseSigningConfigured = keystorePropertiesFile.exists()
+if (releaseSigningConfigured) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def resolveReleaseKeystore = { String configuredPath ->
+    if (!configuredPath) {
+        return null
+    }
+
+    def normalizedPath = configuredPath.trim().replace("\\", "/")
+    def candidates = [
+        configuredPath,
+        normalizedPath,
+    ]
+
+    if (normalizedPath.toLowerCase().startsWith("app/")) {
+        candidates << normalizedPath.substring(4)
+    }
+
+    candidates = candidates.findAll { it }
+
+    def moduleMatch = candidates
+        .collect { file(it) }
+        .find { it != null && it.exists() }
+    if (moduleMatch != null) {
+        return moduleMatch
+    }
+
+    def rootMatch = candidates
+        .collect { rootProject.file(it) }
+        .find { it != null && it.exists() }
+    if (rootMatch != null) {
+        return rootMatch
+    }
+
+    def androidAppMatch = candidates
+        .collect { new File(rootProject.file("app"), it) }
+        .find { it != null && it.exists() }
+    if (androidAppMatch != null) {
+        return androidAppMatch
+    }
+
+    return null
+}
+
+def releaseKeystoreFile = resolveReleaseKeystore(keystoreProperties['STORE_FILE']?.toString())
+
+if (releaseTaskRequested && releaseSigningConfigured && releaseKeystoreFile == null) {
+    throw new GradleException(
+        "Keystore not found. Update android/key.properties STORE_FILE to point to your release keystore."
+    )
+}
+
+if (releaseTaskRequested && !releaseSigningConfigured) {
+    throw new GradleException(
+        "Release build requires signing. Create android/key.properties from android/key.properties.example and run assembleRelease again."
+    )
+}
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -92,15 +165,25 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (releaseSigningConfigured) {
+                storeFile releaseKeystoreFile
+                storePassword keystoreProperties['STORE_PASSWORD']
+                keyAlias keystoreProperties['KEY_ALIAS']
+                keyPassword keystoreProperties['KEY_PASSWORD']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
@@ -117,3 +200,4 @@ dependencies {
         implementation jscFlavor
     }
 }
+
