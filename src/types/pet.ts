@@ -1,6 +1,40 @@
+export type CatDirection =
+  | 'down'
+  | 'up'
+  | 'right'
+  | 'left'
+  | 'left-down'
+  | 'right-down'
+  | 'right-up'
+  | 'left-up';
+
+export type PetSpriteVariant =
+  | 'need-attention'
+  | 'sad'
+  | 'happy'
+  | 'very-happy'
+  | 'normal'
+  | 'rest'
+  | 'walk'
+  | `walk-${CatDirection}`
+  | 'sleep'
+  | 'eat'
+  | `eat-${CatDirection}`
+  | 'meow'
+  | 'yawn'
+  | 'wash'
+  | 'scratch'
+  | 'hiss'
+  | 'single-frame'
+  | 'paw-attack'
+  | `paw-attack-${CatDirection}`
+  | 'paw-attack-hind-legs';
+
 export type PetState = {
+  name: string;
   hunger: number;
   happiness: number;
+  spriteId: string;
   xp: number;
   coins: number;
   feedCount: number;
@@ -10,9 +44,32 @@ export type PetState = {
   unlockedAchievements: string[];
 };
 
+export type AppPalette = {
+  background: string;
+  surface: string;
+  surfaceAlt: string;
+  panel: string;
+  panelBorder: string;
+  text: string;
+  textMuted: string;
+  textSubtle: string;
+  chipBackground: string;
+  chipBorder: string;
+  surfaceHighlight: string;
+  headerBand: string;
+  cardBg: string;
+  mutedTrack: string;
+  shadowColor: string;
+  buttonDisabledBg: string;
+  optionBg: string;
+  optionBgAlt: string;
+};
+
 export type PetTheme = {
   emoji: string;
+  sprite: PetSpriteVariant;
   mood: string;
+  spriteId?: string;
   cardBg: string;
   buttonBg: string;
   border: string;
@@ -38,9 +95,22 @@ export type PetCardProps = {
   level: number;
   feedCost: number;
   theme: PetTheme;
+  palette: AppPalette;
   achievements: Achievement[];
   onFeed: () => void;
   onPlay: () => void;
   onMiniGame: () => void;
   onOpenSettings: () => void;
+  onOpenAchievements: () => void;
+  isActionLocked?: boolean;
+  isFeedInProgress?: boolean;
+  frameSequence?: number[];
+  sequenceSpeedMultiplier?: number;
+  loopAnimation?: boolean;
+  sequenceFps?: number;
+  onActionSequenceComplete?: () => void;
 };
+
+
+
+

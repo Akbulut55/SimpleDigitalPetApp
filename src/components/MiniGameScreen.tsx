@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AppPalette } from '../types/pet';
 import { ActionButton } from './ActionButton';
 import { getMiniGameDeck } from '../utils/miniGame';
 
@@ -7,6 +8,7 @@ type MiniGameScreenProps = {
   onComplete: (correctAnswers: number, lost: boolean, usedQuestionIds: string[]) => void;
   onBack: () => void;
   alreadySeenQuestionIds: string[];
+  palette: AppPalette;
 };
 
 type MiniGameStatus = {
@@ -19,7 +21,7 @@ type MiniGameStatus = {
 const TOTAL_SECONDS = 60;
 const MAX_WRONG_ANSWERS = 3;
 
-export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds }: MiniGameScreenProps) => {
+export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds, palette }: MiniGameScreenProps) => {
   const createQuestionDeck = () => getMiniGameDeck(alreadySeenQuestionIds);
 
   const [questions, setQuestions] = useState<ReturnType<typeof createQuestionDeck>>(() => createQuestionDeck());
@@ -32,6 +34,7 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds }: M
   const [status, setStatus] = useState<MiniGameStatus | null>(null);
 
   const current = questions[index];
+  const timeProgress = Math.max(0, (timeLeft / TOTAL_SECONDS) * 100);
 
   const handleRestart = () => {
     setQuestions(createQuestionDeck());
@@ -124,30 +127,40 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds }: M
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>React Native Fast Quiz</Text>
-      <Text style={styles.subtitle}>Fill the blank with the correct option as fast as possible.</Text>
+      <View style={[styles.headerWrap, { alignItems: 'center' }]}> 
+        <Text style={[styles.title, { color: palette.text }]}>React Native Fast Quiz</Text>
+        <Text style={[styles.subtitle, { color: palette.textMuted }]}>Fill the blank in each snippet before the 60-second timer ends.</Text>
+      </View>
 
-      <View style={styles.metaRow}>
-        <View style={styles.metaChip}>
-          <Text style={styles.metaText}>Time {timeLeft}s</Text>
+      <View style={[styles.scoreSurface, { borderColor: palette.panelBorder, backgroundColor: palette.surface, shadowColor: palette.shadowColor }]}> 
+        <View style={styles.scoreRow}>
+          <View style={[styles.scoreBadge, { borderColor: palette.chipBorder, backgroundColor: palette.chipBackground }]}> 
+            <Text style={[styles.scoreValue, { color: palette.text }]}>{timeLeft}s</Text>
+            <Text style={[styles.scoreLabel, { color: palette.textMuted }]}>Time Left</Text>
+          </View>
+          <View style={[styles.scoreBadge, { borderColor: palette.chipBorder, backgroundColor: palette.chipBackground }]}> 
+            <Text style={[styles.scoreValue, { color: palette.text }]}>{correctAnswers}</Text>
+            <Text style={[styles.scoreLabel, { color: palette.textMuted }]}>Correct</Text>
+          </View>
+          <View style={[styles.scoreBadge, { borderColor: palette.chipBorder, backgroundColor: palette.chipBackground }]}> 
+            <Text style={[styles.scoreValue, { color: palette.text }]}>{wrongAnswers}</Text>
+            <Text style={[styles.scoreLabel, { color: palette.textMuted }]}>Wrong</Text>
+          </View>
         </View>
-        <View style={styles.metaChip}>
-          <Text style={styles.metaText}>Wrong {wrongAnswers}/{MAX_WRONG_ANSWERS}</Text>
-        </View>
-        <View style={styles.metaChip}>
-          <Text style={styles.metaText}>Score {correctAnswers}</Text>
+        <View style={[styles.timerTrack, { backgroundColor: palette.mutedTrack }]}>
+          <View style={[styles.timerFill, { width: `${timeProgress}%` }]} />
         </View>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardHeader}>
+      <View style={[styles.card, { borderColor: palette.panelBorder, backgroundColor: palette.surface, shadowColor: palette.shadowColor }]}> 
+        <Text style={[styles.cardHeader, { color: palette.text }]}> 
           Question {Math.min(index + 1, questions.length)} / {questions.length}
         </Text>
 
-        <ScrollView style={styles.questionScroll} nestedScrollEnabled>
-          <Text style={styles.questionText}>Code:</Text>
+        <ScrollView style={[styles.questionScroll, { borderColor: palette.panelBorder, backgroundColor: palette.surfaceAlt }]} nestedScrollEnabled>
+          <Text style={[styles.questionText, { color: palette.textMuted }]}>Code prompt</Text>
           {codeLines?.map((line, lineIndex) => (
-            <Text key={lineIndex} style={styles.codeLine}>
+            <Text key={lineIndex} style={[styles.codeLine, { color: palette.text }]}> 
               {line.replace('___', '_____')}
             </Text>
           ))}
@@ -157,30 +170,31 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds }: M
           {current?.options.map((option, optionIndex) => (
             <TouchableOpacity
               key={`${current.id}-${optionIndex}`}
-              style={[styles.optionButton, status ? styles.optionButtonDisabled : null]}
+              style={[styles.optionButton, status ? styles.optionButtonDisabled : null, { borderColor: palette.panelBorder, backgroundColor: palette.optionBg }]}
               onPress={() => handleAnswer(optionIndex)}
               disabled={!!status}
             >
-              <Text style={styles.optionText}>{optionIndex + 1}. {option}</Text>
+              <View style={[styles.optionIndex, { backgroundColor: palette.optionBgAlt }]}>
+                <Text style={[styles.optionIndexText, { color: palette.textMuted }]}>{optionIndex + 1}</Text>
+              </View>
+              <Text style={[styles.optionText, { color: palette.text }]}>{option}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {!!status ? (
-          <View style={styles.resultWrap}>
-            <Text style={styles.resultTitle}>
-              {status.lost ? 'Quiz Lost' : 'Quiz Completed'}
-            </Text>
-            <Text style={styles.resultText}>Correct: {status.correctAnswers}</Text>
-            <Text style={styles.resultText}>Wrong: {status.wrongAnswers}</Text>
-            <Text style={styles.resultText}>Status: {status.reason}</Text>
-            <Text style={styles.resultCoins}>Coins awarded: {status.lost ? 0 : status.correctAnswers}</Text>
-            <ActionButton title="Try Again" color="#2563eb" onPress={handleRestart} />
+          <View style={[styles.resultWrap, { borderTopColor: palette.chipBorder }]}> 
+            <Text style={[styles.resultTitle, { color: palette.text }]}>{status.lost ? 'Quiz Lost' : 'Quiz Completed'}</Text>
+            <Text style={[styles.resultText, { color: palette.textMuted }]}>Correct: {status.correctAnswers}</Text>
+            <Text style={[styles.resultText, { color: palette.textMuted }]}>Wrong: {status.wrongAnswers}</Text>
+            <Text style={[styles.resultText, { color: palette.textMuted }]}>Status: {status.reason}</Text>
+            <Text style={[styles.resultCoins, { color: '#16a34a' }]}>Coins earned: {status.lost ? 0 : status.correctAnswers}</Text>
+            <ActionButton title="Try Again" color="#2563eb" onPress={handleRestart} isDarkMode={palette.text === '#f8fafc'} />
           </View>
         ) : null}
       </View>
 
-      <ActionButton title="Exit Quiz" color="#334155" onPress={onBack} />
+      <ActionButton title="Exit Quiz" color="#334155" onPress={onBack} isDarkMode={palette.text === '#f8fafc'} />
     </View>
   );
 };
@@ -188,70 +202,87 @@ export const MiniGameScreen = ({ onComplete, onBack, alreadySeenQuestionIds }: M
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    maxWidth: 440,
+    maxWidth: 470,
     alignItems: 'center',
-    paddingVertical: 12,
     gap: 12,
+  },
+  headerWrap: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 4,
   },
   title: {
     fontSize: 30,
     fontWeight: '800',
-    color: '#0f172a',
+    letterSpacing: -0.2,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#475569',
     textAlign: 'center',
-    marginBottom: 2,
+    paddingHorizontal: 10,
   },
-  metaRow: {
+  scoreSurface: {
     width: '100%',
+    padding: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 10,
+  },
+  scoreRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
   },
-  metaChip: {
+  scoreBadge: {
     flex: 1,
-    borderRadius: 999,
-    paddingVertical: 8,
-    backgroundColor: '#e2e8f0',
     alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 8,
   },
-  metaText: {
-    color: '#0f172a',
-    fontWeight: '700',
+  scoreValue: {
+    fontWeight: '800',
+    fontSize: 18,
+  },
+  scoreLabel: {
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  timerTrack: {
+    height: 8,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  timerFill: {
+    height: '100%',
+    backgroundColor: '#2563eb',
   },
   card: {
     width: '100%',
-    backgroundColor: '#f8fafc',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     padding: 14,
     marginBottom: 8,
-    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
     elevation: 6,
+    gap: 10,
   },
   cardHeader: {
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 8,
+    marginBottom: 2,
   },
   questionScroll: {
-    maxHeight: 140,
-    marginBottom: 12,
+    maxHeight: 146,
+    marginBottom: 2,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
     borderRadius: 12,
-    backgroundColor: '#ffffff',
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
   questionText: {
-    color: '#334155',
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 6,
@@ -259,44 +290,55 @@ const styles = StyleSheet.create({
   codeLine: {
     fontFamily: 'monospace',
     fontSize: 16,
-    color: '#0f172a',
     lineHeight: 22,
+    flexWrap: 'wrap',
   },
   optionsWrap: {
     gap: 8,
+    marginTop: 2,
   },
   optionButton: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 11,
-    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   optionButtonDisabled: {
-    opacity: 0.45,
+    opacity: 0.5,
+  },
+  optionIndex: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionIndexText: {
+    fontWeight: '700',
+    fontSize: 12,
   },
   optionText: {
-    color: '#0f172a',
     fontWeight: '600',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   resultWrap: {
     marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#dbeafe',
     paddingTop: 10,
     gap: 6,
   },
   resultTitle: {
     fontSize: 16,
-    color: '#0f172a',
     fontWeight: '700',
   },
   resultText: {
     color: '#334155',
   },
   resultCoins: {
-    color: '#16a34a',
     fontSize: 16,
     fontWeight: '700',
   },
