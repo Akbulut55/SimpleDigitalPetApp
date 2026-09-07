@@ -1,6 +1,8 @@
 # Simple Digital Pet App
 
-Bu proje, dijital bir evcil hayvan oyunu temeline, mini-quiz tabanlı öğrenme akışını ve oyunlaştırma sistemini ekleyerek geliştirilmiş bir React Native uygulamasıdır. Ana mantığı korunmuş, ancak çok ekranlı akış ve kalıcı ilerleme ile genişletilmiştir.
+Bu proje, dijital bir evcil hayvan oyunu temeline, mini-quiz tabanlı öğrenme akışını ve oyunlaştırma sistemini ekleyen bir React Native uygulamasıdır. Ana mantığı korunmuş, ancak çok ekranlı akış ve kalıcı ilerleme ile genişletilmiştir.
+
+Bu çalışma, **Mobil Uygulama Geliştirme dersi kapsamında hazırlanmış bir ders projesidir**. Tamamlanmış veya üretim kullanımı hedeflenen bir ürün değildir; ders kapsamında belirlenen özellikleri ve mobil uygulama geliştirme yaklaşımlarını uygulamak amacıyla hazırlanmıştır.
 
 ## Projenin amacı ve oyunlaştırma özellikleri
 
